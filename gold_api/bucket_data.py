@@ -82,7 +82,6 @@ def map_member(member):
 def get_all_members():
   members = json_from_object('boatregister', 'gold/latest.json')
   p = s3.list_objects_v2(Bucket='boatregister', Prefix='members/')
-  print(len(members), p['KeyCount'])
   for c in p['Contents']:
     k = c['Key'].split('/')[-1]
     if k.endswith('.json'):
@@ -90,5 +89,4 @@ def get_all_members():
       for m in members:
         if m['ID'] == id:
           m['profile'] = get_profile(id)
-          print(m)
   return [map_member(m) for m in members]
