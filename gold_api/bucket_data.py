@@ -51,7 +51,9 @@ def json_from_object(bucket, key):
 
 def get_profile(member):
   try:
-    augmented = json_from_object('boatregister', f"members/{member['id']}.json")
+    key = f"members/{member['id']}.json"
+    a = s3.head_object('boatregister', key)
+    augmented = json_from_object('boatregister', key)
     return augmented['profile']
   except:
     return ''
