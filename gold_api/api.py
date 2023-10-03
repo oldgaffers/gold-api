@@ -1,5 +1,5 @@
 from graphene.types.scalars import Boolean
-from graphene import Int, List, ObjectType, String, Schema, Mutation
+from graphene import Field, Int, List, ObjectType, String, Schema, Mutation
 from bucket_data import get_all_members, get_profile, put_profile
 
 def get_members_by_id_and_memberno(no, id):
@@ -77,17 +77,23 @@ class Query(ObjectType):
 
 class AddProfile(Mutation):
     class Arguments:
-        id = String()
+        id = Int()
         text = String()
 
     ok = Boolean()
+    member = Field(lambda: Member)
 
-    def mutate(root, info, id, text):
-      print('mutate', root, info, id, text)
+    def mutate(self, info, id, text):
+      print('mutate', info, id, text)
+      members = get_members_by_id(id)
+      if len(members) != 1:
+        return AddProfile(ok=False)
       ok = True
+      member = members[0]
+      member['profile'] = text
       put_profile({ 'id': id, 'profile': text })
-      return AddProfile(ok=ok)
-        
+      return AddProfile(ok=ok, member=member)
+
 class MyMutations(ObjectType):
   addProfile = AddProfile.Field()
 

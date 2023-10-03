@@ -20,13 +20,17 @@ jobs:
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: '1.6.1'
+      - name: test
+        run: |
+          poetry install --with dev
+          poetry run python -m pytest
       - name: package
         run: |
           poetry run pip install -t dist .
           cd dist
           zip -x 'gold_api' -r ../lambda.zip .
           cd gold_api
-          zip ../../lambda.zip .
+          zip ../../lambda.zip -x '__init__.py' *.py
       - name: cred
         uses: aws-actions/configure-aws-credentials@v1
         with:
