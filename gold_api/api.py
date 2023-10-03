@@ -69,8 +69,6 @@ class Query(ObjectType):
         members = get_all_members()
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
-      for m in members:
-        m['profile'] = get_profile(m)
       answers = members
       # print(f"return {answers}")
       return answers
