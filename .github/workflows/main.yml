@@ -28,9 +28,9 @@ jobs:
         run: |
           poetry run pip install -t dist .
           cd dist
-          zip -x 'gold_api' -r ../lambda.zip .
+          zip -r ../lambda.zip * --exclude gold_api\*
           cd gold_api
-          zip ../../lambda.zip -x '__init__.py' *.py
+          zip ../../lambda.zip *.py --exclude __init__.py
       - name: cred
         uses: aws-actions/configure-aws-credentials@v1
         with:
