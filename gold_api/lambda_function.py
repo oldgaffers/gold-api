@@ -8,7 +8,6 @@ def lambda_handler(event, context):
   if 'body' in event and event['body'] is not None:
     body = json.loads(event['body'])
     if 'variables' in body:
-      print(body['query'], body['variables'])
       result = schema.execute(body['query'], variables=body['variables'])
     else:
       result = schema.execute(body['query'])
