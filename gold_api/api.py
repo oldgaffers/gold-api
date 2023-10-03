@@ -1,6 +1,6 @@
 from graphene.types.scalars import Boolean
 from graphene import Field, Int, List, ObjectType, String, Schema, Mutation
-from bucket_data import get_all_members, get_profile, put_profile
+from bucket_data import get_all_members, put_profile
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
@@ -97,4 +97,3 @@ class MyMutations(ObjectType):
 
 def get_schema():
   return Schema(query=Query, mutation=MyMutations)
-

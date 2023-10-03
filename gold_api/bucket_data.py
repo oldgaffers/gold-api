@@ -43,6 +43,7 @@ default_values = {
   'payment': 'unknown',
   'type': 'Single',
   'postcode': '',
+  'profile': '',
 }
 
 def json_from_object(bucket, key):
@@ -50,12 +51,11 @@ def json_from_object(bucket, key):
     text = r["Body"].read().decode('utf-8')
     return json.loads(text)
 
-def get_profile(member):
+def get_profile(id):
   bucket = 'boatregister'
-  key = f"members/{member['id']}.json"
+  key = f"members/{id}.json"
   try:
     augmented = json_from_object(bucket, key)
-    print(augmented)
     return augmented['profile']
   except:
     return ''
@@ -82,12 +82,13 @@ def map_member(member):
 def get_all_members():
   members = json_from_object('boatregister', 'gold/latest.json')
   p = s3.list_objects_v2(Bucket='boatregister', Prefix='members/')
+  print(len(members), p['KeyCount'])
   for c in p['Contents']:
     k = c['Key'].split('/')[-1]
     if k.endswith('.json'):
       id = int(k.split('.')[0])
-      print(id)
       for m in members:
         if m['ID'] == id:
-          m['profile'] = get_profile(m)
+          m['profile'] = get_profile(id)
+          print(m)
   return [map_member(m) for m in members]
