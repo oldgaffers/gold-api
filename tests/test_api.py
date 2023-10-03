@@ -10,7 +10,7 @@ def test_get_members_by_list_of_id(mock_get_all_members):
     assert get_members_by_list_of_id([]) == []
 
 @patch('gold_api.api.put_profile')
-@patch('gold_api.api.get_profile')
+@patch('gold_api.bucket_data.get_profile')
 @patch('gold_api.api.get_all_members')
 def test_mutate(mock_get_all_members, mock_get_profile, mock_put_profile):
     schema = get_schema()
