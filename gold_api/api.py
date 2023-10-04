@@ -82,7 +82,6 @@ class AddProfile(Mutation):
     member = Field(lambda: Member)
 
     def mutate(self, info, id, text):
-      print('mutate', info, id, text)
       members = get_members_by_id(id)
       if len(members) != 1:
         return AddProfile(ok=False)
