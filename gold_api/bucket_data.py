@@ -22,7 +22,12 @@ keymap = {
   'payment': 'Payment Method',
   'type': 'Membership Type',
   'postcode': 'Postcode',
+  'address': ['Address1', 'Address2', 'Address3'], 
+  'country': 'Country', 
+  'yob': 'Year Of Birth', 
+  'start': 'Year Joined', 
   'profile': 'profile',
+  'crewingprofile': 'crewingprofile',
 }
 
 default_values = {
@@ -44,6 +49,11 @@ default_values = {
   'type': 'Single',
   'postcode': '',
   'profile': '',
+  'crewingprofile': '',
+  'address': [], 
+  'country': '', 
+  'yob': -1, 
+  'start': -1, 
 }
 
 def json_from_object(bucket, key):
@@ -51,42 +61,50 @@ def json_from_object(bucket, key):
     text = r["Body"].read().decode('utf-8')
     return json.loads(text)
 
-def get_profile(id):
+def get_augmented(id):
   bucket = 'boatregister'
   key = f"members/{id}.json"
   try:
-    augmented = json_from_object(bucket, key)
-    return augmented['profile']
+    return json_from_object(bucket, key)
   except:
-    return ''
+    return {}
 
-def put_profile(member):
-  key = f"members/{member['id']}.json"
+def put_augmented(member):
+  id = member['id']
+  existing = get_augmented(id)
+  key = f"members/{id}.json"
   try:
-    augmented = json_from_object('boatregister', key)
+    augmented = {**existing, **member}
   except:
-    augmented = {}
-  augmented['profile'] = member['profile']
+    augmented = existing
   s3.put_object(Body=json.dumps(augmented), Bucket='boatregister', Key=key)
 
-def map_member(member):
+def map_member_list_values(keys, member):
+  return [member[k] for k in keys]
+
+def map_member(member, augmentations):
   result = {}
   for key in keymap.keys():
     k = keymap[key]
-    if k in member:
-      result[key] = member[k]
+    if type(k) == list:
+      result[key] = map_member_list_values(k, member)
     else:
-      result[key] = default_values[key]
+      result[key] = member.get(k, default_values.get(k, None))
+  if result['id'] in augmentations:
+    return {**result, **augmentations[result['id']]}
   return result
+  
+def get_all_augmentations():
+  r = {}
+  p = s3.list_objects_v2(Bucket='boatregister', Prefix='members/')
+  for c in p['Contents']:
+    key = c['Key']
+    if key.endswith('.json'):
+      m = json_from_object('boatregister', key)
+      r[m['id']] = m
+  return r
 
 def get_all_members():
   members = json_from_object('boatregister', 'gold/latest.json')
-  p = s3.list_objects_v2(Bucket='boatregister', Prefix='members/')
-  for c in p['Contents']:
-    k = c['Key'].split('/')[-1]
-    if k.endswith('.json'):
-      id = int(k.split('.')[0])
-      for m in members:
-        if m['ID'] == id:
-          m['profile'] = get_profile(id)
-  return [map_member(m) for m in members]
+  a = get_all_augmentations()
+  return [map_member(m, a) for m in members]

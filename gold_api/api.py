@@ -1,6 +1,6 @@
 from graphene.types.scalars import Boolean
 from graphene import Field, Int, List, ObjectType, String, Schema, Mutation
-from bucket_data import get_all_members, put_profile
+from bucket_data import get_all_members, put_augmented
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
@@ -24,26 +24,38 @@ def get_members_by_memberno(no):
 def get_members_by_id(id):
   return get_members_by_field(id, 'id')
 
+class Profile(ObjectType):
+  text = String()
+  picture = String()
+  published = Boolean()
+  
 class Member(ObjectType):
-    id = Int()
-    member = Int()
-    salutation = String()
-    firstname = String()
-    lastname = String()
-    status = String()
-    email = String()
-    GDPR = Boolean()
-    smallboats = Boolean()
-    town = String()
-    area = String()
-    telephone = String()
-    mobile = String()
-    postcode = String()
-    interests = List(String)
-    primary = Boolean()
-    type = String()
-    payment = String()
-    profile = String()
+  id = Int()
+  member = Int()
+  salutation = String()
+  firstname = String()
+  lastname = String()
+  status = String()
+  email = String()
+  GDPR = Boolean()
+  smallboats = Boolean()
+  town = String()
+  area = String()
+  telephone = String()
+  mobile = String()
+  postcode = String()
+  interests = List(String)
+  primary = Boolean()
+  type = String()
+  payment = String()
+  address = List(String)
+  country = String()
+  yob = Int()
+  start = Int()
+  profile = String()
+  crewingprofile = String()
+  #skipper = Profile()
+  #crewing = Profile()
 
 class Query(ObjectType):
     members = List(Member,
@@ -88,11 +100,30 @@ class AddProfile(Mutation):
       ok = True
       member = members[0]
       member['profile'] = text
-      put_profile({ 'id': id, 'profile': text })
+      put_augmented({ 'id': id, 'profile': text })
       return AddProfile(ok=ok, member=member)
+
+class AddCrewProfile(Mutation):
+    class Arguments:
+        id = Int()
+        text = String()
+
+    ok = Boolean()
+    member = Field(lambda: Member)
+
+    def mutate(self, info, id, text):
+      members = get_members_by_id(id)
+      if len(members) != 1:
+        return AddCrewProfile(ok=False)
+      ok = True
+      member = members[0]
+      member['crewingprofile'] = text
+      put_augmented({ 'id': id, 'crewingprofile': text })
+      return AddCrewProfile(ok=ok, member=member)
 
 class MyMutations(ObjectType):
   addProfile = AddProfile.Field()
+  addCrewProfile = AddCrewProfile.Field()
 
 def get_schema():
   return Schema(query=Query, mutation=MyMutations)
