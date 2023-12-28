@@ -1,5 +1,5 @@
 from graphene.types.scalars import Boolean
-from graphene import Field, Int, List, ObjectType, String, Schema, Mutation
+from graphene import Field, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
 from bucket_data import get_all_members, put_augmented
 
 def get_members_by_id_and_memberno(no, id):
@@ -23,6 +23,11 @@ def get_members_by_memberno(no):
 
 def get_members_by_id(id):
   return get_members_by_field(id, 'id')
+
+class ProfileInput(InputObjectType):
+  text = String()
+  picture = String()
+  published = Boolean()
 
 class Profile(ObjectType):
   text = String()
@@ -85,65 +90,32 @@ class Query(ObjectType):
       # print(f"return {answers}")
       return answers
 
-class AddProfile(Mutation):
-    class Arguments:
-        id = Int()
-        text = String()
-
-    ok = Boolean()
-    member = Field(lambda: Member)
-
-    def mutate(self, info, id, text):
-      members = get_members_by_id(id)
-      if len(members) != 1:
-        return AddProfile(ok=False)
-      ok = True
-      member = members[0]
-      member['profile'] = text
-      put_augmented({ 'id': id, 'profile': text })
-      return AddProfile(ok=ok, member=member)
-
-class AddCrewProfile(Mutation):
-    class Arguments:
-        id = Int()
-        text = String()
-
-    ok = Boolean()
-    member = Field(lambda: Member)
-
-    def mutate(self, info, id, text):
-      members = get_members_by_id(id)
-      if len(members) != 1:
-        return AddCrewProfile(ok=False)
-      ok = True
-      member = members[0]
-      member['crewingprofile'] = text
-      put_augmented({ 'id': id, 'crewingprofile': text })
-      return AddCrewProfile(ok=ok, member=member)
-
-'''
 class AddSkipperProfile(Mutation):
     class Arguments:
-        id = Int()
-        profile = Profile()
+        id = Int(required=True)
+        profile = ProfileInput(required=True)
 
     ok = Boolean()
     member = Field(lambda: Member)
 
     def mutate(self, info, id, profile):
+      print('skipper mutate', id, profile)
       members = get_members_by_id(id)
       if len(members) != 1:
         return AddSkipperProfile(ok=False)
       ok = True
       member = members[0]
       member['skipper'] = profile
+      print('M', member, ok)
       put_augmented({ 'id': id, 'skipper': profile })
-      return AddSkipperProfile(ok=ok, member=member)
+      x = AddSkipperProfile(ok=ok, member=member)
+      print('x', x)
+      return x
 
 class AddCrewingProfile(Mutation):
     class Arguments:
-        id = Int()
-        profile = Profile()
+        id = Int(required=True)
+        profile = ProfileInput(required=True)
 
     ok = Boolean()
     member = Field(lambda: Member)
@@ -157,13 +129,10 @@ class AddCrewingProfile(Mutation):
       member['crewing'] = profile
       put_augmented({ 'id': id, 'crewing': profile })
       return AddCrewingProfile(ok=ok, member=member)
-'''
 
 class MyMutations(ObjectType):
-  addProfile = AddProfile.Field()
-  addCrewProfile = AddCrewProfile.Field()
-  #addSkipperProfile = AddSkipperProfile.Field()
-  #addCrewingProfile = AddCrewingProfile.Field()
+  addSkipperProfile = AddSkipperProfile.Field()
+  addCrewingProfile = AddCrewingProfile.Field()
 
 def get_schema():
   return Schema(query=Query, mutation=MyMutations)
