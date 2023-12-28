@@ -28,6 +28,8 @@ keymap = {
   'start': 'Year Joined', 
   'profile': 'profile',
   'crewingprofile': 'crewingprofile',
+  'skipper': 'skipper',
+  'crewing': 'crewing',
 }
 
 default_values = {
@@ -54,6 +56,8 @@ default_values = {
   'country': '', 
   'yob': -1, 
   'start': -1, 
+  'skipper': None,
+  'crewing': None,
 }
 
 def json_from_object(bucket, key):

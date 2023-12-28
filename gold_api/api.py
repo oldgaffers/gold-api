@@ -28,7 +28,7 @@ class Profile(ObjectType):
   text = String()
   picture = String()
   published = Boolean()
-  
+
 class Member(ObjectType):
   id = Int()
   member = Int()
@@ -54,8 +54,8 @@ class Member(ObjectType):
   start = Int()
   profile = String()
   crewingprofile = String()
-  #skipper = Profile()
-  #crewing = Profile()
+  skipper = Profile()
+  crewing = Profile()
 
 class Query(ObjectType):
     members = List(Member,
@@ -121,9 +121,49 @@ class AddCrewProfile(Mutation):
       put_augmented({ 'id': id, 'crewingprofile': text })
       return AddCrewProfile(ok=ok, member=member)
 
+'''
+class AddSkipperProfile(Mutation):
+    class Arguments:
+        id = Int()
+        profile = Profile()
+
+    ok = Boolean()
+    member = Field(lambda: Member)
+
+    def mutate(self, info, id, profile):
+      members = get_members_by_id(id)
+      if len(members) != 1:
+        return AddSkipperProfile(ok=False)
+      ok = True
+      member = members[0]
+      member['skipper'] = profile
+      put_augmented({ 'id': id, 'skipper': profile })
+      return AddSkipperProfile(ok=ok, member=member)
+
+class AddCrewingProfile(Mutation):
+    class Arguments:
+        id = Int()
+        profile = Profile()
+
+    ok = Boolean()
+    member = Field(lambda: Member)
+
+    def mutate(self, info, id, profile):
+      members = get_members_by_id(id)
+      if len(members) != 1:
+        return AddCrewingProfile(ok=False)
+      ok = True
+      member = members[0]
+      member['crewing'] = profile
+      put_augmented({ 'id': id, 'crewing': profile })
+      return AddCrewingProfile(ok=ok, member=member)
+'''
+
 class MyMutations(ObjectType):
   addProfile = AddProfile.Field()
   addCrewProfile = AddCrewProfile.Field()
+  #addSkipperProfile = AddSkipperProfile.Field()
+  #addCrewingProfile = AddCrewingProfile.Field()
 
 def get_schema():
   return Schema(query=Query, mutation=MyMutations)
