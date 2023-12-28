@@ -93,7 +93,7 @@ def map_member(member, augmentations):
   if result['id'] in augmentations:
     return {**result, **augmentations[result['id']]}
   return result
-  
+
 def get_all_augmentations():
   r = {}
   p = s3.list_objects_v2(Bucket='boatregister', Prefix='members/')
