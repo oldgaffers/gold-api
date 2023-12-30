@@ -26,12 +26,12 @@ def get_members_by_id(id):
 
 class ProfileInput(InputObjectType):
   text = String()
-  picture = String()
+  pictures = List(String)
   published = Boolean()
 
 class Profile(ObjectType):
   text = String()
-  picture = String()
+  pictures = List(String)
   published = Boolean()
 
 class Member(ObjectType):
@@ -57,10 +57,8 @@ class Member(ObjectType):
   country = String()
   yob = Int()
   start = Int()
-  profile = String()
-  crewingprofile = String()
-  skipper = Profile()
-  crewing = Profile()
+  skipper = Field(Profile)
+  crewing = Field(Profile)
 
 class Query(ObjectType):
     members = List(Member,
@@ -74,13 +72,11 @@ class Query(ObjectType):
 
     def resolve_members(root, info, **args):
       k = list(args.keys())
-      # print('K', args)
       if 'members' in k:
         members = get_members_by_list_of_memberno(args['members'])
         k.remove('members')
       elif 'ids' in k:
         members = get_members_by_list_of_id(args['ids'])
-        # print('k', args, members) 
         k.remove('ids')
       else:
         members = get_all_members()

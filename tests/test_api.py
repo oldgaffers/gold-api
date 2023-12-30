@@ -4,10 +4,57 @@ from mock import patch
 sys.path.append(os.getcwd()+'/gold_api')
 from gold_api.api import get_members_by_list_of_id, get_schema
 
+test_member = {
+        'id': 559,
+        'salutation': '',
+        'firstname': '',
+        'lastname': '',
+        'member': 0,
+        'GDPR': False,
+        'smallboats': False,
+        'status': '',
+        'telephone': '',
+        'mobile': '',
+        'area': '',
+        'town': '',
+        'interests': [],
+        'email': '',
+        'primary': True,
+        'skipper': { 'text': 'careful' },
+        'crewing': { 'text': 'some text' },
+        'postcode': '',
+        'type': '',
+        'payment': '',
+        'address': [''],
+        'country': '',
+        'yob': 0,
+        'start': 0,
+    }
+
 @patch('gold_api.api.get_all_members')
 def test_get_members_by_list_of_id(mock_get_all_members):
-    mock_get_all_members.return_value=[]
+    mock_get_all_members.side_effect=[],[{'id': 559}]
     assert get_members_by_list_of_id([]) == []
+    assert get_members_by_list_of_id([559]) == [{'id': 559}]
+
+@patch('gold_api.api.get_all_members')
+def test_query_by_list_of_id(mock_get_all_members):
+    mock_get_all_members.return_value=[test_member]
+    schema = get_schema()
+    er = schema.execute(
+        'query members($ids: [Int]!) { members(ids: $ids) { id }}',
+        variables={
+            'ids': [559],
+        },
+    )
+    assert er.data == { 'members': [{ 'id': 559 }]}    
+    er = schema.execute(
+        'query members($ids: [Int]!) { members(ids: $ids) { id skipper{ text } crewing{ text } salutation firstname lastname member id GDPR smallboats status telephone mobile area town interests email primary postcode type payment address country yob start __typename }}',
+        variables={
+            'ids': [559],
+        },
+    )
+    assert er.data == { 'members': [{**test_member, '__typename': 'Member'}]}
 
 @patch('gold_api.api.put_augmented')
 @patch('gold_api.bucket_data.get_augmented')
