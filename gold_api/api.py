@@ -95,18 +95,15 @@ class AddSkipperProfile(Mutation):
     member = Field(lambda: Member)
 
     def mutate(self, info, id, profile):
-      print('skipper mutate', id, profile)
+      # print('skipper mutate', id, profile)
       members = get_members_by_id(id)
       if len(members) != 1:
         return AddSkipperProfile(ok=False)
       ok = True
       member = members[0]
       member['skipper'] = profile
-      print('M', member, ok)
       put_augmented({ 'id': id, 'skipper': profile })
-      x = AddSkipperProfile(ok=ok, member=member)
-      print('x', x)
-      return x
+      return AddSkipperProfile(ok=ok, member=member)
 
 class AddCrewingProfile(Mutation):
     class Arguments:
