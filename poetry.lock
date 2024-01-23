@@ -176,7 +176,6 @@ files = [
 
 [package.dependencies]
 attrs = ">=19.2.0"
-boto3 = {version = ">=1.3.1", optional = true, markers = "extra == \"s3\""}
 certifi = "*"
 click = ">=8.0,<9.0"
 click-plugins = ">=1.0"
@@ -396,4 +395,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7a4cb5737b2f4c79c7011f0b7c2e5dee33509e32d24d10e4971f7089a5ff8435"
+content-hash = "1d64550332f6f5d2dba25d822dc4db52fc9bc6d62bd25db4dc2528f7835ab790"
