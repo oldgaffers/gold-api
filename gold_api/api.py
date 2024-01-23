@@ -1,5 +1,5 @@
 from graphene.types.scalars import Boolean
-from graphene import Field, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
+from graphene import Field, Float, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
 from bucket_data import get_all_members, put_augmented
 
 def get_members_by_id_and_memberno(no, id):
@@ -68,10 +68,34 @@ class Query(ObjectType):
       lastname=String(),
       members=List(Int),
       ids=List(Int),
+      lat=Float(),
+      lng=Float(),
+      after=String(),
+      size=Int(),
+      sortby=String(),
+      sortdir=String()
     )
 
     def resolve_members(root, info, **args):
       k = list(args.keys())
+      size = args.get('size', 100000)
+      after = args.get('after', 0)
+      lat = args.get('lat', None)
+      lng = args.get('lng', None)
+      sortby = args.get('sortby', 'id')
+      sortdir = args.get('sortdir', 'asc')
+      if 'sortby' in k:
+        k.remove('sortby')
+      if 'sortdir' in k:
+        k.remove('sortdir')
+      if 'size' in k:
+        k.remove('size')
+      if 'after' in k:
+        k.remove('after')
+      if 'lat' in k:
+        k.remove('lat')
+      if 'lng' in k:
+        k.remove('lng')
       if 'members' in k:
         members = get_members_by_list_of_memberno(args['members'])
         k.remove('members')
@@ -82,7 +106,8 @@ class Query(ObjectType):
         members = get_all_members()
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
-      answers = members
+      members.sort(key=lambda x : x[sortby])
+      answers = [m for m in members if f'{m[sortby]}' > after][:size]
       # print(f"return {answers}")
       return answers
 

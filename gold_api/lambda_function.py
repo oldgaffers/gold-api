@@ -1,10 +1,23 @@
-import json 
+import json
+import urllib.request
 from api import get_schema
 
 schema = get_schema()
 
+def get_user(event):
+  auth = event['headers']['authorization']
+  authorizer = event['requestContext']['authorizer']
+  aud = authorizer['claims']['aud']
+  aud = aud.replace('[','').replace(']','').split(' ')
+  ui = next((url for url in aud if 'userinfo' in url), None)
+  req = urllib.request.Request(ui, headers={'authorization': auth})
+  with urllib.request.urlopen(req) as response:
+    user = json.loads(response.read())
+  return user
+
 def lambda_handler(event, context):
   # print(json.dumps(event))
+  user = get_user(event)
   if 'body' in event and event['body'] is not None:
     body = json.loads(event['body'])
     if 'variables' in body:
