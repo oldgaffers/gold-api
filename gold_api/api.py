@@ -104,7 +104,7 @@ class Query(ObjectType):
         k.remove('ids')
       else:
         members = get_all_members()
-      members.sort(key=lambda x : x[sortby])
+      members.sort(key=lambda x : x[sortby], reverse=sortdir=='desc')
       members = [m for m in members if f'{m[sortby]}' > after][:size]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
