@@ -79,7 +79,7 @@ class Query(ObjectType):
     def resolve_members(root, info, **args):
       k = list(args.keys())
       size = args.get('size', 100000)
-      after = args.get('after', 0)
+      after = args.get('after', '0')
       lat = args.get('lat', None)
       lng = args.get('lng', None)
       sortby = args.get('sortby', 'id')
@@ -104,11 +104,11 @@ class Query(ObjectType):
         k.remove('ids')
       else:
         members = get_all_members()
+      members.sort(key=lambda x : x[sortby])
+      members = [m for m in members if f'{m[sortby]}' > after][:size]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
-      members.sort(key=lambda x : x[sortby])
-      answers = [m for m in members if f'{m[sortby]}' > after][:size]
-      # print(f"return {answers}")
+      answers = members
       return answers
 
 class AddSkipperProfile(Mutation):

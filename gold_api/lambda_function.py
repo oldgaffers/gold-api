@@ -17,7 +17,8 @@ def get_user(event):
 
 def lambda_handler(event, context):
   # print(json.dumps(event))
-  user = get_user(event)
+  if 'headers' in event:
+    user = get_user(event)
   if 'body' in event and event['body'] is not None:
     body = json.loads(event['body'])
     if 'variables' in body:
