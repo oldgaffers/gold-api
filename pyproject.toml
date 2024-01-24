@@ -8,8 +8,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.11, <3.12"
 graphene = "^3.3"
-requests = "^2.31.0"
-pyproj = "^3.6.1"
 
 
 [tool.poetry.group.dev.dependencies]
