@@ -6,9 +6,10 @@ authors = ["jcable <julian.cable@yahoo.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11, <3.12"
 graphene = "^3.3"
-fiona = "^1.9.5"
+requests = "^2.31.0"
+pyproj = "^3.6.1"
 
 
 [tool.poetry.group.dev.dependencies]
