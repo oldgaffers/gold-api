@@ -1,8 +1,11 @@
 import json
 import urllib.request
 from api import get_schema
+from geo import init
 
 schema = get_schema()
+
+init()
 
 def get_user(event):
   auth = event['headers']['authorization']
