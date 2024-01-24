@@ -1,7 +1,6 @@
 from graphene.types.scalars import Boolean
 from graphene import Field, Float, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
 from bucket_data import get_all_members, put_augmented
-import fiona
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
