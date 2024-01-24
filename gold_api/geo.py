@@ -30,5 +30,4 @@ def haversine(lon1, lat1, lon2, lat2):
 def distance(place, lat, lng):
     ll = find(place)
     d = haversine(ll['longitude'], ll['latitude'], lng, lat)
-    print(d)
-    return d
+    return float(int(10*d)/10)
