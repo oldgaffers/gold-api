@@ -15,6 +15,16 @@ files = [
 dev = ["black", "coverage", "isort", "pre-commit", "pyenchant", "pylint"]
 
 [[package]]
+name = "bng-latlon"
+version = "1.1"
+description = "Converts british national grid (OSBG36) to lat lon (WGS84) and vice versa."
+optional = false
+python-versions = "*"
+files = [
+    {file = "bng_latlon-1.1.tar.gz", hash = "sha256:2428c3949907754b9c5db8abb34ac5d1ccbc190a131678ea74c76d146095f3d3"},
+]
+
+[[package]]
 name = "boto3"
 version = "1.28.58"
 description = "The AWS SDK for Python"
@@ -253,4 +263,4 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11, <3.12"
-content-hash = "efec3882b0ced131c7d2750b03c0072e3e320e2bebd6fb96a6b592772568567f"
+content-hash = "39ee3d54e220e77af72d9a328dd85f95801343491db515cda35edca1b13ac0fd"
