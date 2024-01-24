@@ -87,7 +87,7 @@ class Query(ObjectType):
       lat = args.get('lat', None)
       lng = args.get('lng', None)
       sortby = args.get('sortby', 'id')
-      sortdir = args.get('sortdir', 'asc')
+      reverse = args.get('sortdir', 'asc') == 'desc'
       if 'members' in k:
         members = get_members_by_list_of_memberno(args['members'])
       elif 'ids' in k:
@@ -97,7 +97,7 @@ class Query(ObjectType):
       k = [key for key in k if key not in extrakeys]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
-      members.sort(key=lambda x : x[sortby], reverse=sortdir=='desc')
+      members.sort(key=lambda x : x[sortby], reverse=reverse)
       members = [m for m in members if f'{m[sortby]}' > after][:size]
       if lat is not None and lng is not None:
         members = [{**m, 'proximity': distance(m['postcode'], lng, lat)} for m in members]

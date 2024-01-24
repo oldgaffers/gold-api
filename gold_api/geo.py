@@ -17,23 +17,26 @@ def init():
         dynamodb = boto3.resource('dynamodb')
 
 def find(place):
+    if place.strip() == '' or place is None:
+        return None
     ddb_table = dynamodb.Table('geonames_cache')
-    r = ddb_table.get_item(Key={ 'name': place })
+    r = ddb_table.get_item(Key={ 'name': f'{place}' })
     if 'Item' in r:
       item = r['Item']
-      return { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
+      data = { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
+      return data
     r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
     if r.ok:
         answer = r.json()
         entry = answer['results'][0]['GAZETTEER_ENTRY']
-        ll = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        data = { 'name': place, 'lat': f'{ll[0]}', 'lng': f'{ll[1]}' }
+        lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
+        data = { 'name': f'{place}', 'lat': f'{lat}', 'lng': f'{lng}' }
         item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
-        print('find', item)
         ddb_table.put_item(Item=item)
-        result = { 'place': place, 'latitude': ll[0], 'longitude': ll[1] }
-        print('find', result)
+        result = { 'place': place, 'latitude': lat, 'longitude': lng }
         return result
+    else:
+        print('error', r)
 
 def haversine(lon1, lat1, lon2, lat2):
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
@@ -42,7 +45,14 @@ def haversine(lon1, lat1, lon2, lat2):
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     return 2 * 6371 * asin(sqrt(a))
 
-def distance(place, lat, lng):
-    ll = find(place)
-    d = haversine(ll['longitude'], ll['latitude'], lng, lat)
-    return float(int(10*d)/10)
+def distance(place, lng, lat): 
+    try:
+        ll = find(place)
+        if ll is not None:
+            d = haversine(ll['longitude'], ll['latitude'], lng, lat)
+            d = d / 1.852
+            d = float(int(10*d)/10)
+            return d
+    except Exception as e:
+        print(f'error [{place}]', e)
+    return 9999.0
