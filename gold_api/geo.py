@@ -21,15 +21,19 @@ def find(place):
     r = ddb_table.get_item(Key={ 'name': place })
     if 'Item' in r:
       item = r['Item']
-      return { 'place': place, 'latitude': item['lat'], 'longitude': item['lng'] }
+      return { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
     r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
     if r.ok:
         answer = r.json()
         entry = answer['results'][0]['GAZETTEER_ENTRY']
         ll = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        data = { 'name': place, 'lat': ll[0], 'lng': ll[1] }
-        ddb_table.put_item(Item={**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 })
-        return { 'place': place, 'latitude': data['lat'], 'longitude': data['lng'] }
+        data = { 'name': place, 'lat': f'{ll[0]}', 'lng': f'{ll[1]}' }
+        item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
+        print('find', item)
+        ddb_table.put_item(Item=item)
+        result = { 'place': place, 'latitude': ll[0], 'longitude': ll[1] }
+        print('find', result)
+        return result
 
 def haversine(lon1, lat1, lon2, lat2):
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
