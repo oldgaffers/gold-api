@@ -1,6 +1,7 @@
 from graphene.types.scalars import Boolean
 from graphene import Field, Float, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
 from bucket_data import get_all_members, put_augmented
+from geo import distance
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
@@ -33,7 +34,7 @@ class Profile(ObjectType):
   text = String()
   pictures = List(String)
   published = Boolean()
-
+  
 class Member(ObjectType):
   id = Int()
   member = Int()
@@ -59,6 +60,9 @@ class Member(ObjectType):
   start = Int()
   skipper = Field(Profile)
   crewing = Field(Profile)
+  proximity = Float()
+
+extrakeys = ['members', 'ids', 'lat', 'lng', 'after', 'size', 'sortby', 'sortdir']
 
 class Query(ObjectType):
     members = List(Member,
@@ -84,30 +88,19 @@ class Query(ObjectType):
       lng = args.get('lng', None)
       sortby = args.get('sortby', 'id')
       sortdir = args.get('sortdir', 'asc')
-      if 'sortby' in k:
-        k.remove('sortby')
-      if 'sortdir' in k:
-        k.remove('sortdir')
-      if 'size' in k:
-        k.remove('size')
-      if 'after' in k:
-        k.remove('after')
-      if 'lat' in k:
-        k.remove('lat')
-      if 'lng' in k:
-        k.remove('lng')
       if 'members' in k:
         members = get_members_by_list_of_memberno(args['members'])
-        k.remove('members')
       elif 'ids' in k:
         members = get_members_by_list_of_id(args['ids'])
-        k.remove('ids')
       else:
         members = get_all_members()
-      members.sort(key=lambda x : x[sortby], reverse=sortdir=='desc')
-      members = [m for m in members if f'{m[sortby]}' > after][:size]
+      k = [key for key in k if key not in extrakeys]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
+      members.sort(key=lambda x : x[sortby], reverse=sortdir=='desc')
+      members = [m for m in members if f'{m[sortby]}' > after][:size]
+      if lat is not None and lng is not None:
+        members = [{**m, 'proximity': distance(m['postcode'], lng, lat)} for m in members]
       answers = members
       return answers
 
