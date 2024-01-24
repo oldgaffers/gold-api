@@ -3,7 +3,7 @@ import requests
 from bng_latlon import OSGB36toWGS84
 from math import radians, sin, cos, asin, sqrt
 
-ssm = boto3.client('ssm')
+ssm = boto3.client('ssm', config={'region_name': 'eu-west-1'})
 
 r = ssm.get_parameter(Name='/OS/API_KEY')
 key = r['Parameter']['Value']
