@@ -6,8 +6,8 @@ import os
 
 schema = get_schema()
 
-print(os.environ)
-init()
+if os.environ.get('CI', 'false') != 'true':
+  init()
 
 def get_user(event):
   auth = event['headers']['authorization']
