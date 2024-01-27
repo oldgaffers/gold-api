@@ -16,27 +16,27 @@ def init():
         key = r['Parameter']['Value']
         dynamodb = boto3.resource('dynamodb')
 
-def find(place):
+def find(p):
     if place is None:
         return None
-    p = f'{place}'.strip()
-    if p == '':
+    place = f'{p}'.strip()
+    if place == '':
         return None
     ddb_table = dynamodb.Table('geonames_cache')
-    r = ddb_table.get_item(Key={ 'name': p })
+    r = ddb_table.get_item(Key={ 'name': f'{place}' })
     if 'Item' in r:
       item = r['Item']
-      data = { 'place': p, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
+      data = { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
       return data
     r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
     if r.ok:
         answer = r.json()
         entry = answer['results'][0]['GAZETTEER_ENTRY']
         lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        data = { 'name': p, 'lat': f'{lat}', 'lng': f'{lng}' }
+        data = { 'name': f'{place}', 'lat': f'{lat}', 'lng': f'{lng}' }
         item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
         ddb_table.put_item(Item=item)
-        result = { 'place': p, 'latitude': lat, 'longitude': lng }
+        result = { 'place': place, 'latitude': lat, 'longitude': lng }
         return result
     else:
         print('error', r)
