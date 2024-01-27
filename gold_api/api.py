@@ -1,7 +1,7 @@
 from graphene.types.scalars import Boolean
 from graphene import Field, Float, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
 from bucket_data import get_all_members, put_augmented
-from geo import distance
+from geo import addproximity
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
@@ -100,7 +100,7 @@ class Query(ObjectType):
       members.sort(key=lambda x : x[sortby], reverse=reverse)
       members = [m for m in members if f'{m[sortby]}' > after][:size]
       if lat is not None and lng is not None:
-        members = [{**m, 'proximity': distance(m['postcode'], lng, lat)} for m in members]
+        members = addproximity(members, lng, lat)
       answers = members
       return answers
 
