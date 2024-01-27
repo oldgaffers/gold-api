@@ -17,7 +17,7 @@ def init():
         dynamodb = boto3.resource('dynamodb')
 
 def find(p):
-    if place is None:
+    if p is None:
         return None
     place = f'{p}'.strip()
     if place == '':
