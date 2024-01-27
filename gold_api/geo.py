@@ -17,12 +17,15 @@ def init():
         dynamodb = boto3.resource('dynamodb')
 
 def findnet(place):
-    r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
-    if r.ok:
-        answer = r.json()
-        entry = answer['results'][0]['GAZETTEER_ENTRY']
-        lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        return { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
+    try: 
+        r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
+        if r.ok:
+            answer = r.json()
+            entry = answer['results'][0]['GAZETTEER_ENTRY']
+            lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
+            return { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
+    except:
+        pass
     return None
 
 def find(p):
@@ -72,7 +75,7 @@ def addproximity(members, lng, lat):
             pc = f'{pc}'.strip()
             n = [p for p in places if p['name'] == pc]
             if len(n) == 0:
-                loc = find(pc)
+                loc = findnet(pc)
                 if loc is None:
                     m2.append(member)
                 else:
