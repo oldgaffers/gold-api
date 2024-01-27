@@ -16,6 +16,15 @@ def init():
         key = r['Parameter']['Value']
         dynamodb = boto3.resource('dynamodb')
 
+def findnet(place):
+    r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
+    if r.ok:
+        answer = r.json()
+        entry = answer['results'][0]['GAZETTEER_ENTRY']
+        lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
+        return { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
+    return None
+
 def find(p):
     if p is None:
         return None
@@ -28,15 +37,11 @@ def find(p):
       item = r['Item']
       data = { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
       return data
-    r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
-    if r.ok:
-        answer = r.json()
-        entry = answer['results'][0]['GAZETTEER_ENTRY']
-        lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        data = { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
+    data = findnet(place)
+    if data is not None:
         item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
         ddb_table.put_item(Item=item)
-        result = { 'place': place, 'latitude': lat, 'longitude': lng }
+        result = { 'place': place, 'latitude': data['lat'], 'longitude': data['lng'] }
         return result
     else:
         print('error', r)
@@ -48,14 +53,43 @@ def haversine(lon1, lat1, lon2, lat2):
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     return 2 * 6371 * asin(sqrt(a))
 
-def distance(place, lng, lat): 
+def distance(ll, lng, lat): 
+    d = haversine(float(ll['lng']), float(ll['lat']), lng, lat)
+    d = d / 1.852
+    d = float(int(10*d)/10)
+    return d
+
+def addproximity(members, lng, lat):
+    ddb_table = dynamodb.Table('geonames_cache')
+    r = ddb_table.scan(ProjectionExpression='#n,lat,lng', ExpressionAttributeNames = {'#n': 'name'})
+    places = r['Items']
+    m2 = []
+    for member in members:
+        pc = member.get('postcode', None)
+        if pc is None:
+            m2.append(member)
+        else:
+            pc = f'{pc}'.strip()
+            n = [p for p in places if p['name'] == pc]
+            if len(n) == 0:
+                loc = find(pc)
+                if loc is None:
+                    m2.append(member)
+                else:
+                    m2.append({**member, 'proximity': distance(loc, lng, lat)})
+            else:
+                m2.append({**member, 'proximity': distance(n[0], lng, lat)})
+    return m2
+
+def distance2(p, lng, lat): 
+    place = f'{p}'.strip()
     try:
-        ll = find(place)
+        ll = find()
         if ll is not None:
-            d = haversine(ll['longitude'], ll['latitude'], lng, lat)
-            d = d / 1.852
-            d = float(int(10*d)/10)
-            return d
+            return distance(ll, lng, lat)
     except Exception as e:
-        print(f'error [{place}]', e)
+        print(f'error [{p}]', e)
     return 9999.0
+
+def addproximity2(members, lng, lat):
+    return [{**m, 'proximity': distance2(m['postcode'], lng, lat)} for m in members]
