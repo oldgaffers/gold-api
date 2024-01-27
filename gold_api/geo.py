@@ -69,6 +69,8 @@ def addproximity(members, lng, lat):
     m2 = []
     for member in members:
         pc = member.get('postcode', member.get('town', None))
+        good = ['United Kingdom', 'Ireland'].includes(member['country'])
+        print('G', good, member['country'])
         if pc is None:
             m2.append(member)
         else:
