@@ -23,7 +23,7 @@ def find(p):
     if place == '':
         return None
     ddb_table = dynamodb.Table('geonames_cache')
-    r = ddb_table.get_item(Key={ 'name': f'{place}' })
+    r = ddb_table.get_item(Key={ 'name': place })
     if 'Item' in r:
       item = r['Item']
       data = { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
@@ -33,7 +33,7 @@ def find(p):
         answer = r.json()
         entry = answer['results'][0]['GAZETTEER_ENTRY']
         lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-        data = { 'name': f'{place}', 'lat': f'{lat}', 'lng': f'{lng}' }
+        data = { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
         item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
         ddb_table.put_item(Item=item)
         result = { 'place': place, 'latitude': lat, 'longitude': lng }
