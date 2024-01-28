@@ -92,7 +92,8 @@ def addproximity(members, lng, lat):
                         ll = mapcachetoresult(loc)
                         m2.append({**member, 'proximity': distance(ll, lng, lat)})
                 else:
-                    m2.append({**member, 'proximity': distance(n[0], lng, lat)})
+                    ll = mapcachetoresult(n[0])
+                    m2.append({**member, 'proximity': distance(ll, lng, lat)})
         except Exception as e:
             print(e)
     return m2
