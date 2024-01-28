@@ -28,6 +28,13 @@ def findnet(place):
         pass
     return None
 
+def addtocache(ddb_table, data):
+    item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
+    ddb_table.put_item(Item=item)
+
+def mapcachetoresult(item):
+    return { 'place': item['name'], 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
+
 def find(p):
     if p is None:
         return None
@@ -37,15 +44,11 @@ def find(p):
     ddb_table = dynamodb.Table('geonames_cache')
     r = ddb_table.get_item(Key={ 'name': place })
     if 'Item' in r:
-      item = r['Item']
-      data = { 'place': place, 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
-      return data
+      return mapcachetoresult(r['Item'])
     data = findnet(place)
     if data is not None:
-        item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
-        ddb_table.put_item(Item=item)
-        result = { 'place': place, 'latitude': data['lat'], 'longitude': data['lng'] }
-        return result
+        addtocache(ddb_table, data)
+        return mapcachetoresult(data)
     else:
         print('error', r)
 
@@ -57,19 +60,12 @@ def haversine(lon1, lat1, lon2, lat2):
     return 2 * 6371 * asin(sqrt(a))
 
 def distance(ll, lng, lat):
-    try:
-        if 'latitude' in ll:
-            x = float(ll['longitude'])
-            y = float(ll['latitude'])
-        else:
-            x = float(ll['lng'])
-            y = float(ll['lat'])
-        d = haversine(x, y, lng, lat)
-        d = d / 1.852
-        d = float(int(10*d)/10)
-        return d
-    except Exception as e:
-        print(e)
+    x = float(ll['longitude'])
+    y = float(ll['latitude'])
+    d = haversine(x, y, lng, lat)
+    d = d / 1.852 # km to nm
+    d = float(int(10*d)/10)
+    return d
 
 def addproximity(members, lng, lat):
     ddb_table = dynamodb.Table('geonames_cache')
@@ -92,7 +88,9 @@ def addproximity(members, lng, lat):
                     if loc is None:
                         m2.append(member)
                     else:
-                        m2.append({**member, 'proximity': distance(loc, lng, lat)})
+                        addtocache(ddb_table, loc)
+                        ll = mapcachetoresult(loc)
+                        m2.append({**member, 'proximity': distance(ll, lng, lat)})
                 else:
                     m2.append({**member, 'proximity': distance(n[0], lng, lat)})
         except Exception as e:
