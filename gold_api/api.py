@@ -147,8 +147,3 @@ class MyMutations(ObjectType):
 
 def get_schema():
   return Schema(query=Query, mutation=MyMutations)
-
-# def findpc(pc):
-#   c=fiona.open("s3://ws-ingest-test/codepo_gb.gpkg")
-#   q=next(x for x in iter(c) if x.properties['postcode'] == pc)
-#   return q.geometry.coordinates # TODO OSGB to lat/lng
