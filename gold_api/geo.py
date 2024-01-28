@@ -56,11 +56,20 @@ def haversine(lon1, lat1, lon2, lat2):
     a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     return 2 * 6371 * asin(sqrt(a))
 
-def distance(ll, lng, lat): 
-    d = haversine(float(ll['lng']), float(ll['lat']), lng, lat)
-    d = d / 1.852
-    d = float(int(10*d)/10)
-    return d
+def distance(ll, lng, lat):
+    try:
+        if 'latitude' in ll:
+            x = float(ll['longitude'])
+            y = float(ll['latitude'])
+        else:
+            x = float(ll['lng'])
+            y = float(ll['lat'])
+        d = haversine(x, y, lng, lat)
+        d = d / 1.852
+        d = float(int(10*d)/10)
+        return d
+    except Exception as e:
+        print(e)
 
 def addproximity(members, lng, lat):
     ddb_table = dynamodb.Table('geonames_cache')
@@ -68,22 +77,26 @@ def addproximity(members, lng, lat):
     places = r['Items']
     m2 = []
     for member in members:
-        pc = member.get('postcode', member.get('town', None))
-        good = ['United Kingdom', 'Ireland'].includes(member['country'])
-        print('G', good, member['country'])
-        if pc is None:
-            m2.append(member)
-        else:
-            pc = f'{pc}'.strip()
-            n = [p for p in places if p['name'] == pc]
-            if len(n) == 0:
-                loc = findnet(pc)
-                if loc is None:
-                    m2.append(member)
-                else:
-                    m2.append({**member, 'proximity': distance(loc, lng, lat)})
+        try:
+            pc = member.get('postcode', member.get('town', None))
+            if pc is None:
+                m2.append(member)
             else:
-                m2.append({**member, 'proximity': distance(n[0], lng, lat)})
+                pc = f'{pc}'.strip()
+                n = [p for p in places if p['name'] == pc]
+                if len(n) == 0:
+                    loc = None
+                    good = member['country'] in ['Eire', 'United Kingdom']
+                    if good:
+                        loc = findnet(pc)
+                    if loc is None:
+                        m2.append(member)
+                    else:
+                        m2.append({**member, 'proximity': distance(loc, lng, lat)})
+                else:
+                    m2.append({**member, 'proximity': distance(n[0], lng, lat)})
+        except Exception as e:
+            print(e)
     return m2
 
 def distance2(p, lng, lat): 
