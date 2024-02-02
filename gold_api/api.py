@@ -1,23 +1,27 @@
 from graphene.types.scalars import Boolean
-from graphene import Field, Float, Int, InputObjectType, List, Mutation, ObjectType, String, Schema
+from graphene import (
+  Field, Float, Int, InputObjectType, List, 
+  Mutation, ObjectType, String, Schema
+)
 from bucket_data import get_all_members, put_augmented
 from geo import addproximity
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
-  return list(filter(lambda member: member['id'] == id and member['member'] == no, members))
+  wanted = filter(lambda member: member['id'] == id and member['member'] == no, members)
+  return len(members), list(wanted)
 
 def get_members_by_list_of_memberno(l):
   members = get_all_members()
-  return list(filter(lambda member: member['member'] in l, members))
+  return len(members), list(filter(lambda member: member['member'] in l, members))
 
 def get_members_by_list_of_id(l):
   members = get_all_members()
-  return list(filter(lambda member: member['id'] in l, members))
+  return len(members), list(filter(lambda member: member['id'] in l, members))
   
 def get_members_by_field(value, field):
   members = get_all_members()
-  return list(filter(lambda member: member[field] == value, members))
+  return len(members), list(filter(lambda member: member[field] == value, members))
 
 def get_members_by_memberno(no):
   return get_members_by_field(no, 'member')
@@ -65,6 +69,7 @@ class Member(ObjectType):
 extrakeys = ['members', 'ids', 'lat', 'lng', 'after', 'size', 'sortby', 'sortdir']
 
 class Query(ObjectType):
+    total = Int()
     members = List(Member,
       id=Int(),
       member=Int(),
@@ -77,8 +82,11 @@ class Query(ObjectType):
       after=String(),
       size=Int(),
       sortby=String(),
-      sortdir=String()
+      sortdir=String(),
     )
+
+    def resolve_total(root, info, **args):
+      return len(get_all_members())
 
     def resolve_members(root, info, **args):
       k = list(args.keys())
@@ -89,11 +97,12 @@ class Query(ObjectType):
       sortby = args.get('sortby', 'id')
       reverse = args.get('sortdir', 'asc') == 'desc'
       if 'members' in k:
-        members = get_members_by_list_of_memberno(args['members'])
+        total, members = get_members_by_list_of_memberno(args['members'])
       elif 'ids' in k:
-        members = get_members_by_list_of_id(args['ids'])
+        total, members = get_members_by_list_of_id(args['ids'])
       else:
         members = get_all_members()
+        total = len(members)
       k = [key for key in k if key not in extrakeys]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
