@@ -34,8 +34,23 @@ test_member = {
 @patch('gold_api.api.get_all_members')
 def test_get_members_by_list_of_id(mock_get_all_members):
     mock_get_all_members.side_effect=[],[{'id': 559}]
-    assert get_members_by_list_of_id([]) == []
-    assert get_members_by_list_of_id([559]) == [{'id': 559}]
+    total, members = get_members_by_list_of_id([])
+    assert members == []
+    assert total == 0
+    total, members = get_members_by_list_of_id([559])
+    assert members == [{'id': 559}]
+
+@patch('gold_api.api.get_all_members')
+def test_get_count(mock_get_all_members):
+    mock_get_all_members.return_value=[{'id': 559}]
+    schema = get_schema()
+    er = schema.execute(
+        'query m($id: Int!) { total members(id: $id) { id } }',
+        variables={
+            'id': 559,
+        },
+    )
+    assert er.data == {'members': [{'id': 559}], 'total': 1}
 
 @patch('gold_api.api.get_all_members')
 def test_query_by_list_of_id(mock_get_all_members):
