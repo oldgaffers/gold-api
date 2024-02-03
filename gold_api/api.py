@@ -3,8 +3,16 @@ from graphene import (
   Field, Float, Int, InputObjectType, List, 
   Mutation, ObjectType, String, Schema
 )
-from bucket_data import get_all_members, put_augmented
+from bucket_data import put_augmented
+from bucket_data import get_all_members as get_all_members_from_bucket
 from geo import addproximity
+
+all_members = None
+
+def get_all_members():
+  if all_members is None:
+    all_members = get_all_members_from_bucket()
+  return all_members
 
 def get_members_by_id_and_memberno(no, id):
   members = get_all_members()
@@ -69,6 +77,9 @@ class Member(ObjectType):
 extrakeys = ['members', 'ids', 'lat', 'lng', 'after', 'size', 'sortby', 'sortdir']
 
 class Query(ObjectType):
+    
+    all_members = None
+
     total = Int()
     members = List(Member,
       id=Int(),
