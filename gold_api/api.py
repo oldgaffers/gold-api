@@ -10,6 +10,7 @@ from geo import addproximity
 all_members = None
 
 def get_all_members():
+  global all_members
   if all_members is None:
     all_members = get_all_members_from_bucket()
   return all_members
@@ -74,7 +75,7 @@ class Member(ObjectType):
   crewing = Field(Profile)
   proximity = Float()
 
-extrakeys = ['members', 'ids', 'lat', 'lng', 'after', 'size', 'sortby', 'sortdir']
+extrakeys = ['members', 'ids', 'lat', 'lng', 'after', 'size', 'start', 'sortby', 'sortdir']
 
 class Query(ObjectType):
     
@@ -91,6 +92,7 @@ class Query(ObjectType):
       lat=Float(),
       lng=Float(),
       after=String(),
+      start=Int(),
       size=Int(),
       sortby=String(),
       sortdir=String(),
@@ -101,6 +103,7 @@ class Query(ObjectType):
 
     def resolve_members(root, info, **args):
       k = list(args.keys())
+      start = args.get('start', 0)
       size = args.get('size', 100000)
       after = args.get('after', '0')
       lat = args.get('lat', None)
@@ -118,7 +121,7 @@ class Query(ObjectType):
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))
       members.sort(key=lambda x : x[sortby], reverse=reverse)
-      members = [m for m in members if f'{m[sortby]}' > after][:size]
+      members = [m for m in members if f'{m[sortby]}' > after][start:start+size]
       if lat is not None and lng is not None:
         members = addproximity(members, lng, lat)
       answers = members
