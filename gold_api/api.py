@@ -137,7 +137,7 @@ class AddSkipperProfile(Mutation):
 
     def mutate(self, info, id, profile):
       # print('skipper mutate', id, profile)
-      members = get_members_by_id(id)
+      n, members = get_members_by_id(id)
       if len(members) != 1:
         return AddSkipperProfile(ok=False)
       ok = True
@@ -155,7 +155,7 @@ class AddCrewingProfile(Mutation):
     member = Field(lambda: Member)
 
     def mutate(self, info, id, profile):
-      members = get_members_by_id(id)
+      n, members = get_members_by_id(id)
       if len(members) != 1:
         return AddCrewingProfile(ok=False)
       ok = True
