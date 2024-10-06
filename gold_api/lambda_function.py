@@ -1,13 +1,15 @@
 import json
 import urllib.request
 from api import get_schema
-from geo import init
 import os
+import geo
+import ddb_data
 
 schema = get_schema()
 
 if os.environ.get('CI', 'false') != 'true':
-  init()
+  geo.init()
+  ddb_data.init()
 
 def get_user(event):
   auth = event['headers']['authorization']

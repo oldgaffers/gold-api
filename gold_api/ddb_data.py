@@ -12,8 +12,13 @@ keymap = {
   'start': 'year_joined', 
 }
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('members')
+dynamodb = None
+table = None
+
+def init():
+  global dynamodb, table
+  dynamodb = boto3.resource('dynamodb')
+  table = dynamodb.Table('members')
 
 def mapValue(k, v):
   if k == 'lat' or k == 'lng':
