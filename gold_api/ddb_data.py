@@ -3,7 +3,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal 
 
 # fields to exclude from results by default
-exclude = ['lat', 'lng']
+exclude = ['lat', 'lng', 'address1', 'address2', 'address3']
 
 keymap = {
   'address': ['address1', 'address2', 'address3'], 
@@ -25,14 +25,18 @@ def mapValue(k, v):
 def mapKey(k):
   if k == 'membership':
     return 'member'
-  elif k == 'year_of_birth':
+  elif k == 'year of birth':
     return 'yob'
-  elif k == 'year_joined':
+  elif k == 'year joined':
     return 'start'
   return k
 
+def a(row):
+  row['address'] = [row['address1'], row['address2'], row['address3']]
+  return row
+
 def mapData(data, exclude):
-  return [{mapKey(k):mapValue(k, v) for (k,v) in row.items() if not k in exclude} for row in data]
+  return [{mapKey(k):mapValue(k, v) for (k,v) in a(row).items() if not k in exclude} for row in data]
 
 def put_augmented():
   pass
