@@ -1,6 +1,6 @@
 import json 
 import boto3
-import ddb_data
+# import ddb_data
 
 s3 = boto3.client('s3')
 
