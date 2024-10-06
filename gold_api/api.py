@@ -6,7 +6,7 @@ from graphene import (
 from bucket_data import put_augmented, get_augmented
 from bucket_data import get_all_members, get_members_by_list_of_memberno, get_members_by_list_of_id, get_member_by_id
 from geo import addproximity
-import ddb_data
+# import ddb_data
 
 all_members = None
 
