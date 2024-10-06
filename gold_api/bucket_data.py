@@ -1,5 +1,6 @@
 import json 
 import boto3
+import ddb_data
 
 s3 = boto3.client('s3')
 
@@ -95,6 +96,7 @@ def map_member(member, augmentations):
     else:
       result[key] = member.get(k, default_values.get(k, None))
   if result['id'] in augmentations:
+    # ddb_data.put_augmented(augmentations[result['id']])
     return {**result, **augmentations[result['id']]}
   return result
 

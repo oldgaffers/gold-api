@@ -38,8 +38,24 @@ def a(row):
 def mapData(data, exclude):
   return [{mapKey(k):mapValue(k, v) for (k,v) in a(row).items() if not k in exclude} for row in data]
 
-def put_augmented():
-  pass
+def put_augmented(row):
+    print(row)
+    primary_key = ['id','membership']
+    item = {keymap.get(k, k.lower().replace(' ', '_').replace(':', '')):v for (k,v) in row.items()}
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('members')
+    r = table.query(KeyConditionExpression=Key("membership").eq(item['membership']))
+    print(r)
+    a = [kv for kv in item.items() if kv[0] not in primary_key]
+    keys = [kv[0] for kv in a]
+    vals = [kv[1] for kv in a]
+    return table.update_item(
+        Key={ 'id':item['id'], 'membership':item['membership'] },
+        UpdateExpression=f"SET {','.join([f'#f{i}=:var{i}' for i, k in enumerate(keys)])}",
+        ExpressionAttributeNames={f'#f{i}':k for i,k in enumerate(keys)},
+        ExpressionAttributeValues={f':var{i}':v for i,v in enumerate(vals)},
+        ReturnValues="UPDATED_NEW"
+    )
 
 def get_all_members():
   global table, exclude
