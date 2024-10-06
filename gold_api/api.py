@@ -4,39 +4,10 @@ from graphene import (
   Mutation, ObjectType, String, Schema
 )
 from bucket_data import put_augmented
-from bucket_data import get_all_members as get_all_members_from_bucket
+from bucket_data import get_all_members, get_members_by_list_of_memberno, get_members_by_id, get_members_by_list_of_id
 from geo import addproximity
 
 all_members = None
-
-def get_all_members():
-  global all_members
-  if all_members is None:
-    all_members = get_all_members_from_bucket()
-  return all_members
-
-def get_members_by_id_and_memberno(no, id):
-  members = get_all_members()
-  wanted = filter(lambda member: member['id'] == id and member['member'] == no, members)
-  return len(members), list(wanted)
-
-def get_members_by_list_of_memberno(l):
-  members = get_all_members()
-  return len(members), list(filter(lambda member: member['member'] in l, members))
-
-def get_members_by_list_of_id(l):
-  members = get_all_members()
-  return len(members), list(filter(lambda member: member['id'] in l, members))
-  
-def get_members_by_field(value, field):
-  members = get_all_members()
-  return len(members), list(filter(lambda member: member[field] == value, members))
-
-def get_members_by_memberno(no):
-  return get_members_by_field(no, 'member')
-
-def get_members_by_id(id):
-  return get_members_by_field(id, 'id')
 
 class ProfileInput(InputObjectType):
   text = String()

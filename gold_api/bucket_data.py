@@ -112,3 +112,21 @@ def get_all_members():
   members = json_from_object('boatregister', 'gold/latest.json')
   a = get_all_augmentations()
   return [map_member(m, a) for m in members]
+
+def get_members_by_list_of_memberno(l):
+  members = get_all_members()
+  return len(members), list(filter(lambda member: member['member'] in l, members))
+
+def get_members_by_list_of_id(l):
+  members = get_all_members()
+  return len(members), list(filter(lambda member: member['id'] in l, members))
+  
+def get_members_by_field(value, field):
+  members = get_all_members()
+  return len(members), list(filter(lambda member: member[field] == value, members))
+
+def get_members_by_memberno(no):
+  return get_members_by_field(no, 'member')
+
+def get_members_by_id(id):
+  return get_members_by_field(id, 'id')
