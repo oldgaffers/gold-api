@@ -3,8 +3,8 @@ from graphene import (
   Field, Float, Int, InputObjectType, List, 
   Mutation, ObjectType, String, Schema
 )
-from bucket_data import put_augmented
-from bucket_data import get_all_members, get_members_by_list_of_memberno, get_members_by_id, get_members_by_list_of_id
+from bucket_data import put_augmented, get_augmented
+from bucket_data import get_all_members, get_members_by_list_of_memberno, get_members_by_list_of_id, get_member_by_id
 from geo import addproximity
 
 all_members = None
@@ -108,11 +108,10 @@ class AddSkipperProfile(Mutation):
 
     def mutate(self, info, id, profile):
       # print('skipper mutate', id, profile)
-      n, members = get_members_by_id(id)
-      if len(members) != 1:
+      member = get_member_by_id(id)
+      if member is None:
         return AddSkipperProfile(ok=False)
       ok = True
-      member = members[0]
       member['skipper'] = profile
       put_augmented({ 'id': id, 'skipper': profile })
       return AddSkipperProfile(ok=ok, member=member)
@@ -126,11 +125,10 @@ class AddCrewingProfile(Mutation):
     member = Field(lambda: Member)
 
     def mutate(self, info, id, profile):
-      n, members = get_members_by_id(id)
-      if len(members) != 1:
+      member = get_member_by_id(id)
+      if member is None:
         return AddCrewingProfile(ok=False)
       ok = True
-      member = members[0]
       member['crewing'] = profile
       put_augmented({ 'id': id, 'crewing': profile })
       return AddCrewingProfile(ok=ok, member=member)

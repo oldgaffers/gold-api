@@ -35,10 +35,12 @@ def get_members_by_list_of_memberno(l):
     r = table.scan(FilterExpression=Attr('membership').is_in(l))
   return table.item_count, mapData(r['Items'], exclude)
 
-def get_members_by_id(id):
+def get_member_by_id(id):
   global table, exclude
   r = table.query(KeyConditionExpression=Key("id").eq(id))
-  return table.item_count, mapData(r['Items'], exclude)
+  if r['Count'] == 1:
+    return mapData(r['Items'], exclude)[0]
+  return None
 
 def get_members_by_list_of_id(l):
   global table, exclude

@@ -128,5 +128,8 @@ def get_members_by_field(value, field):
 def get_members_by_memberno(no):
   return get_members_by_field(no, 'member')
 
-def get_members_by_id(id):
-  return get_members_by_field(id, 'id')
+def get_member_by_id(id):
+  n, l = get_members_by_field(id, 'id')
+  if n == 1:
+    return l[0]
+  return None

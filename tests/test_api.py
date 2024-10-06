@@ -32,15 +32,6 @@ test_member = {
     }
 
 @patch('gold_api.api.get_all_members')
-def test_get_members_by_list_of_id(mock_get_all_members):
-    mock_get_all_members.side_effect=[],[{'id': 559}]
-    total, members = get_members_by_list_of_id([])
-    assert members == []
-    assert total == 0
-    total, members = get_members_by_list_of_id([559])
-    assert members == [{'id': 559}]
-
-@patch('gold_api.api.get_all_members')
 def test_get_count(mock_get_all_members):
     mock_get_all_members.return_value=[{'id': 559}]
     schema = get_schema()
@@ -52,9 +43,9 @@ def test_get_count(mock_get_all_members):
     )
     assert er.data == {'members': [{'id': 559}], 'total': 1}
 
-@patch('gold_api.api.get_all_members')
-def test_query_by_list_of_id(mock_get_all_members):
-    mock_get_all_members.return_value=[test_member]
+@patch('gold_api.api.get_members_by_list_of_id')
+def test_query_by_list_of_id(mock_get_members_by_list_of_id):
+    mock_get_members_by_list_of_id.return_value=1, [test_member]
     schema = get_schema()
     er = schema.execute(
         'query members($ids: [Int]!) { members(ids: $ids) { id }}',
@@ -72,9 +63,10 @@ def test_query_by_list_of_id(mock_get_all_members):
     assert er.data == { 'members': [{**test_member, '__typename': 'Member'}]}
 
 @patch('gold_api.api.put_augmented')
-@patch('gold_api.bucket_data.get_augmented')
-@patch('gold_api.api.get_all_members')
-def test_add_skipper_profile_bad(mock_get_all_members, mock_get_augmented, mock_put_augmented):
+@patch('gold_api.api.get_augmented')
+@patch('gold_api.api.get_member_by_id')
+def test_add_skipper_profile_bad(mock_get_member_by_id, mock_get_augmented, mock_put_augmented):
+    mock_get_member_by_id.return_value = None
     schema = get_schema()
     er = schema.execute(
         'mutation m($id: Int!, $profile: ProfileInput!) { addSkipperProfile(id: $id, profile: $profile) { ok }}',
@@ -88,11 +80,12 @@ def test_add_skipper_profile_bad(mock_get_all_members, mock_get_augmented, mock_
     assert er.data == { 'addSkipperProfile': {'ok': False} }
 
 @patch('gold_api.api.put_augmented')
-@patch('gold_api.bucket_data.get_augmented')
-@patch('gold_api.api.get_members_by_id')
-def test_add_skipper_profile_good(get_members_by_id, mock_get_augmented, mock_put_augmented):
-    get_members_by_id.return_value = [{ 'id': 559 }]
+@patch('gold_api.api.get_augmented')
+@patch('gold_api.api.get_member_by_id')
+def test_add_skipper_profile_good(mock_get_member_by_id, mock_get_augmented, mock_put_augmented):
+    mock_get_member_by_id.return_value = { 'id': 559 }
     mock_get_augmented.return_value = {}
+    mock_put_augmented.return_value = None
     schema = get_schema()
     er = schema.execute(
         'mutation m($id: Int!, $profile: ProfileInput!) { addSkipperProfile(id: $id, profile: $profile) { ok, member { id } }}',
@@ -109,11 +102,12 @@ def test_add_skipper_profile_good(get_members_by_id, mock_get_augmented, mock_pu
     assert r['member'] == { 'id': 559}
 
 @patch('gold_api.api.put_augmented')
-@patch('gold_api.bucket_data.get_augmented')
-@patch('gold_api.api.get_members_by_id')
-def test_add_crewing_profile_good(get_members_by_id, mock_get_augmented, mock_put_augmented):
-    get_members_by_id.return_value = [{ 'id': 559 }]
+@patch('gold_api.api.get_augmented')
+@patch('gold_api.api.get_member_by_id')
+def test_add_crewing_profile_good(mock_get_member_by_id, mock_get_augmented, mock_put_augmented):
+    mock_get_member_by_id.return_value = { 'id': 559 }
     mock_get_augmented.return_value = {}
+    mock_put_augmented.return_value = None
     schema = get_schema()
     er = schema.execute(
         'mutation m($id: Int!, $profile: ProfileInput!) { addCrewingProfile(id: $id, profile: $profile) { ok, member { id } }}',
