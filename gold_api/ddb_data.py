@@ -5,20 +5,35 @@ from decimal import Decimal
 # fields to exclude from results by default
 exclude = ['lat', 'lng']
 
+keymap = {
+  'address': ['address1', 'address2', 'address3'], 
+  'member': 'membership',
+  'yob': 'year_of_birth', 
+  'start': 'year_joined', 
+}
+
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('members')
 
 def mapValue(k, v):
-  print(k, v)
   if k == 'lat' or k == 'lng':
     return float(v)
   if isinstance(v, Decimal):
     return int(v)
   return v
 
+def mapKey(k):
+  if k == 'membership':
+    return 'member'
+  elif k == 'year_of_birth':
+    return 'yob'
+  elif k == 'year_joined':
+    return 'start'
+  return k
+
 def mapData(data, exclude):
-  return [{k:mapValue(k, v) for (k,v) in row.items() if not k in exclude} for row in data]
-  
+  return [{mapKey(k):mapValue(k, v) for (k,v) in row.items() if not k in exclude} for row in data]
+
 def put_augmented():
   pass
 
