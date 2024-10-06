@@ -52,8 +52,11 @@ def put_augmented(row):
     keys = [kv[0] for kv in a]
     vals = [kv[1] for kv in a]
     id = row['id']
-    m = get_member_by_id(id)
-    membership = m['membership']
+    r = table.scan(FilterExpression=Attr('id').eq(id), ProjectionExpression='membership')
+    if r['Count'] != 1:
+      return
+    membership = r['Items'][0]['membership']
+    print('membership', membership)
     return table.update_item(
         Key={ 'id': id, 'membership': membership },
         UpdateExpression=f"SET {','.join([f'#f{i}=:var{i}' for i, k in enumerate(keys)])}",
@@ -77,7 +80,7 @@ def get_members_by_list_of_memberno(l):
 
 def get_member_by_id(id):
   global table, exclude
-  r = table.query(KeyConditionExpression=Key("id").eq(id))
+  r = table.scan(FilterExpression=Attr('id').eq(id))
   if r['Count'] == 1:
     return mapData(r['Items'], exclude)[0]
   return None
