@@ -96,7 +96,6 @@ def map_member(member, augmentations):
     else:
       result[key] = member.get(k, default_values.get(k, None))
   if result['id'] in augmentations:
-    # ddb_data.put_augmented(augmentations[result['id']])
     return {**result, **augmentations[result['id']]}
   return result
 
@@ -108,6 +107,7 @@ def get_all_augmentations():
     if key.endswith('.json'):
       m = json_from_object('boatregister', key)
       r[m['id']] = m
+      # ddb_data.put_augmented(m)
   return r
 
 def get_all_members():
