@@ -2,123 +2,62 @@ import boto3
 import requests
 from bng_latlon import OSGB36toWGS84
 from math import radians, sin, cos, asin, sqrt
-from datetime import datetime
-from ddb_data import put_augmented
+from ddb_data import add_location, geoval
 
 key = None
-dynamodb = None
 
 def init():
-    global key
-    global dynamodb
-    if key is None:
-        ssm = boto3.client('ssm')
-        r = ssm.get_parameter(Name='/OS/API_KEY')
-        key = r['Parameter']['Value']
-        dynamodb = boto3.resource('dynamodb')
+  global key
+  if key is None:
+    ssm = boto3.client('ssm')
+    r = ssm.get_parameter(Name='/OS/API_KEY')
+    key = r['Parameter']['Value']
 
-def findnet(place):
-    try: 
-        r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
-        if r.ok:
-            answer = r.json()
-            entry = answer['results'][0]['GAZETTEER_ENTRY']
-            lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
-            return { 'name': place, 'lat': f'{lat}', 'lng': f'{lng}' }
-    except:
-        pass
-    return None
-
-def addtocache(ddb_table, data):
-    item = {**data, 'timestamp':  int(datetime.utcnow().timestamp()) + 86400 }
-    ddb_table.put_item(Item=item)
-
-def mapcachetoresult(item):
-    return { 'place': item['name'], 'latitude': float(item['lat']), 'longitude': float(item['lng']) }
-
-def find(p):
-    if p is None:
-        return None
-    place = f'{p}'.strip()
-    if place == '':
-        return None
-    ddb_table = dynamodb.Table('geonames_cache')
-    r = ddb_table.get_item(Key={ 'name': place })
-    if 'Item' in r:
-      return mapcachetoresult(r['Item'])
-    data = findnet(place)
-    if data is not None:
-        addtocache(ddb_table, data)
-        return mapcachetoresult(data)
-    else:
-        print('error', r)
+def osfind(place):
+  try: 
+    r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
+    if r.ok:
+      answer = r.json()
+      entry = answer['results'][0]['GAZETTEER_ENTRY']
+      lat, lng = OSGB36toWGS84(entry['GEOMETRY_X'], entry['GEOMETRY_Y'])
+      return { 'name': place, 'lat': lat, 'lng': lng }
+  except:
+    pass
+  return None
 
 def haversine(lon1, lat1, lon2, lat2):
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    return 2 * 6371 * asin(sqrt(a))
+  lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+  dlon = lon2 - lon1
+  dlat = lat2 - lat1
+  a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+  return 2 * 6371 * asin(sqrt(a))
 
 def distance(ll, lng, lat):
-    x = ll.get('lng', None)
-    y = ll.get('lat', None)
-    if x is None or y is None:
-        return None
-    d = haversine(x, y, lng, lat)
-    d = d / 1.852 # km to nm
-    d = float(int(10*d)/10)
-    return d
+  x = ll.get('lng', None)
+  y = ll.get('lat', None)
+  if x is None or y is None:
+      return None
+  d = haversine(x, y, lng, lat)
+  d = d / 1.852 # km to nm
+  d = float(int(10*d)/10)
+  return d
 
 def addlatlng(members):
-    ddb_table = dynamodb.Table('geonames_cache')
-    r = ddb_table.scan(ProjectionExpression='#n,lat,lng', ExpressionAttributeNames = {'#n': 'name'})
-    places = r['Items']
-    for member in members:
-        if 'lat' in member and 'lng' in member:
-            continue
-        pc = member.get('postcode', member.get('town', None))
-        if pc is None:
-            continue
-        pc = f'{pc}'.strip()
-        # look up in cache
-        n = [p for p in places if p['name'] == pc]
-        if len(n) > 0:
-            loc = { 'lat': n[0]['lat'], 'lng': n[0]['lng'], 'id': member['id']}
-            put_augmented(loc)
-            member['lat'] = loc['lat']
-            member['lng'] = loc['lng']
-        else:
-            good = member['country'] in ['Eire', 'United Kingdom']
-            if good:
-                loc = findnet(pc)
-                if loc is not None:
-                    addtocache(ddb_table, loc)
-                    member['lat'] = loc['lat']
-                    member['lng'] = loc['lng']
-                    loc['id'] = member['id']
-                    put_augmented({ 'lat': loc['lat'], 'lng': loc['lng'], 'id': member['id']})
+  for member in members:
+    if member['country'] in ['Eire', 'United Kingdom'] and len(member['postcode']) > 2 and not 'lat' in member:
+        loc = osfind(member['postcode'].replace(' ', ''))
+        if loc is not None:
+          member['lat'] = geoval(loc['lat'])
+          member['lng'] = geoval(loc['lng'])
+          add_location(member, loc)
 
 def addproximity(members, lng, lat):
-    addlatlng(members)
-    m2 = []
-    for member in members:
-        d = distance(member, lng, lat)
-        if d is None:
-            m2.append(member)
-        else:
-            m2.append({**member, 'proximity': d})
-    return m2
-
-def distance2(p, lng, lat): 
-    place = f'{p}'.strip()
-    try:
-        ll = find(place)
-        if ll is not None:
-            return distance(ll, lng, lat)
-    except Exception as e:
-        print(f'error [{p}]', e)
-    return 9999.0
-
-def addproximity2(members, lng, lat):
-    return [{**m, 'proximity': distance2(m['postcode'], lng, lat)} for m in members]
+  addlatlng(members)
+  m2 = []
+  for member in members:
+    d = distance(member, lng, lat)
+    if d is None:
+      m2.append(member)
+    else:
+      m2.append({**member, 'proximity': d})
+  return m2
