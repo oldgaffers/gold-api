@@ -45,7 +45,6 @@ def mapData(data, exclude):
 
 def put_augmented(row):
     global table
-    print('ddb put_augmented', row)
     primary_key = ['id','membership']
     item = {keymap.get(k, k.lower().replace(' ', '_').replace(':', '')):v for (k,v) in row.items()}
     a = [kv for kv in item.items() if kv[0] not in primary_key]
@@ -56,7 +55,6 @@ def put_augmented(row):
     if r['Count'] != 1:
       return
     membership = r['Items'][0]['membership']
-    print('membership', membership)
     return table.update_item(
         Key={ 'id': id, 'membership': membership },
         UpdateExpression=f"SET {','.join([f'#f{i}=:var{i}' for i, k in enumerate(keys)])}",
