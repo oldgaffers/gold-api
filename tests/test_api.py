@@ -33,7 +33,7 @@ test_member = {
 
 @patch('gold_api.api.get_all_members')
 def test_get_count(mock_get_all_members):
-    mock_get_all_members.return_value=[{'id': 559}]
+    mock_get_all_members.return_value=1,[{'id': 559}]
     schema = get_schema()
     er = schema.execute(
         'query m($id: Int!) { total members(id: $id) { id } }',
