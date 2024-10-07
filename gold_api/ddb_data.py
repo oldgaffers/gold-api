@@ -85,6 +85,9 @@ def put_augmented(row):
       ReturnValues="UPDATED_NEW"
   )
 
+def get_total():
+  return table.item_count
+
 def get_all_members():
   global table
   r = table.scan()
@@ -94,9 +97,10 @@ def get_members_by_list_of_memberno(l):
   global table
   if len(l) == 1:
     r = table.query(KeyConditionExpression=Key("membership").eq(l[0]))
+    return table.item_count, mapData(r['Items'])
   else:
     r = table.scan(FilterExpression=Attr('membership').is_in(l))
-  return table.item_count, mapData(r['Items'])
+    return r['Count'], mapData(r['Items'])
 
 def get_member_by_id(id):
   global table
@@ -108,7 +112,7 @@ def get_member_by_id(id):
 def get_members_by_list_of_id(l):
   global table
   r = table.scan(FilterExpression=Attr('id').is_in(l))
-  return table.item_count, mapData(r['Items'])
+  return r['Count'], mapData(r['Items'])
 
 def geoval(f):
   return round(Decimal(f), 5)

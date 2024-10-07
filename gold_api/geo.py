@@ -51,7 +51,7 @@ def addlatlng(members):
         member['lng'] = geoval(loc['lng'])
         add_location(member, loc)
 
-def addproximity(members, lng, lat):
+def add_proximity(members, lng, lat):
   addlatlng(members)
   m2 = []
   for member in members:

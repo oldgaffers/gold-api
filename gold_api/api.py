@@ -3,9 +3,9 @@ from graphene import (
   Field, Float, Int, InputObjectType, List, 
   Mutation, ObjectType, String, Schema
 )
-from ddb_data import put_augmented
+from ddb_data import put_augmented, get_total
 from ddb_data import get_all_members, get_members_by_list_of_memberno, get_members_by_list_of_id, get_member_by_id
-from geo import addproximity
+from geo import add_proximity
 
 class ProfileInput(InputObjectType):
   text = String()
@@ -68,7 +68,7 @@ class Query(ObjectType):
     )
 
     def resolve_total(root, info, **args):
-      return len(get_all_members())
+      return get_total()
 
     def resolve_members(root, info, **args):
       k = list(args.keys())
@@ -91,9 +91,8 @@ class Query(ObjectType):
       members.sort(key=lambda x : x[sortby], reverse=reverse)
       members = [m for m in members if f'{m[sortby]}' > after][start:start+size]
       if lat is not None and lng is not None:
-        members = addproximity(members, lng, lat)
-      answers = members
-      return answers
+        members = add_proximity(members, lng, lat)
+      return members
 
 class AddSkipperProfile(Mutation):
     class Arguments:
