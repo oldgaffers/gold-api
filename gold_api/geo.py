@@ -3,6 +3,7 @@ import requests
 from bng_latlon import OSGB36toWGS84
 from math import radians, sin, cos, asin, sqrt
 from datetime import datetime
+from ddb_data import put_augmented
 
 key = None
 dynamodb = None
@@ -60,48 +61,59 @@ def haversine(lon1, lat1, lon2, lat2):
     return 2 * 6371 * asin(sqrt(a))
 
 def distance(ll, lng, lat):
-    x = float(ll['longitude'])
-    y = float(ll['latitude'])
+    x = ll.get('lng', None)
+    y = ll.get('lat', None)
+    if x is None or y is None:
+        return None
     d = haversine(x, y, lng, lat)
     d = d / 1.852 # km to nm
     d = float(int(10*d)/10)
     return d
 
-def addproximity(members, lng, lat):
+def addlatlng(members):
     ddb_table = dynamodb.Table('geonames_cache')
     r = ddb_table.scan(ProjectionExpression='#n,lat,lng', ExpressionAttributeNames = {'#n': 'name'})
     places = r['Items']
+    for member in members:
+        if 'lat' in member and 'lng' in member:
+            continue
+        pc = member.get('postcode', member.get('town', None))
+        if pc is None:
+            continue
+        pc = f'{pc}'.strip()
+        # look up in cache
+        n = [p for p in places if p['name'] == pc]
+        if len(n) > 0:
+            loc = { 'lat': n[0]['lat'], 'lng': n[0]['lng'], 'id': member['id']}
+            put_augmented(loc)
+            member['lat'] = loc['lat']
+            member['lng'] = loc['lng']
+        else:
+            good = member['country'] in ['Eire', 'United Kingdom']
+            if good:
+                loc = findnet(pc)
+                if loc is not None:
+                    addtocache(ddb_table, loc)
+                    member['lat'] = loc['lat']
+                    member['lng'] = loc['lng']
+                    loc['id'] = member['id']
+                    put_augmented({ 'lat': loc['lat'], 'lng': loc['lng'], 'id': member['id']})
+
+def addproximity(members, lng, lat):
+    addlatlng(members)
     m2 = []
     for member in members:
-        try:
-            pc = member.get('postcode', member.get('town', None))
-            if pc is None:
-                m2.append(member)
-            else:
-                pc = f'{pc}'.strip()
-                n = [p for p in places if p['name'] == pc]
-                if len(n) == 0:
-                    loc = None
-                    good = member['country'] in ['Eire', 'United Kingdom']
-                    if good:
-                        loc = findnet(pc)
-                    if loc is None:
-                        m2.append(member)
-                    else:
-                        addtocache(ddb_table, loc)
-                        ll = mapcachetoresult(loc)
-                        m2.append({**member, 'proximity': distance(ll, lng, lat)})
-                else:
-                    ll = mapcachetoresult(n[0])
-                    m2.append({**member, 'proximity': distance(ll, lng, lat)})
-        except Exception as e:
-            print(e)
+        d = distance(member, lng, lat)
+        if d is None:
+            m2.append(member)
+        else:
+            m2.append({**member, 'proximity': d})
     return m2
 
 def distance2(p, lng, lat): 
     place = f'{p}'.strip()
     try:
-        ll = find()
+        ll = find(place)
         if ll is not None:
             return distance(ll, lng, lat)
     except Exception as e:
