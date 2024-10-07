@@ -41,24 +41,27 @@ def mapData(data):
   return [{mapKey(k):mapValue(k, v) for (k,v) in a(row).items()} for row in data]
 
 def put_augmented(row):
-    global table
-    primary_key = ['id','membership']
-    item = {keymap.get(k, k.lower().replace(' ', '_').replace(':', '')):v for (k,v) in row.items()}
-    a = [kv for kv in item.items() if kv[0] not in primary_key]
-    keys = [kv[0] for kv in a]
-    vals = [kv[1] for kv in a]
-    id = row['id']
+  global table
+  if 'membership' in row:
+    membership = row['membership']
+  else:
     r = table.scan(FilterExpression=Attr('id').eq(id), ProjectionExpression='membership')
     if r['Count'] != 1:
       return
     membership = r['Items'][0]['membership']
-    return table.update_item(
-        Key={ 'id': id, 'membership': membership },
-        UpdateExpression=f"SET {','.join([f'#f{i}=:var{i}' for i, k in enumerate(keys)])}",
-        ExpressionAttributeNames={f'#f{i}':k for i,k in enumerate(keys)},
-        ExpressionAttributeValues={f':var{i}':v for i,v in enumerate(vals)},
-        ReturnValues="UPDATED_NEW"
-    )
+  primary_key = ['id','membership']
+  item = {keymap.get(k, k.lower().replace(' ', '_').replace(':', '')):v for (k,v) in row.items()}
+  a = [kv for kv in item.items() if kv[0] not in primary_key]
+  keys = [kv[0] for kv in a]
+  vals = [kv[1] for kv in a]
+  id = row['id']
+  return table.update_item(
+      Key={ 'id': id, 'membership': membership },
+      UpdateExpression=f"SET {','.join([f'#f{i}=:var{i}' for i, k in enumerate(keys)])}",
+      ExpressionAttributeNames={f'#f{i}':k for i,k in enumerate(keys)},
+      ExpressionAttributeValues={f':var{i}':v for i,v in enumerate(vals)},
+      ReturnValues="UPDATED_NEW"
+  )
 
 def get_all_members():
   global table
