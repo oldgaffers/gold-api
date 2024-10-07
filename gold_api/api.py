@@ -3,12 +3,9 @@ from graphene import (
   Field, Float, Int, InputObjectType, List, 
   Mutation, ObjectType, String, Schema
 )
-from bucket_data import put_augmented, get_augmented
-from bucket_data import get_all_members, get_members_by_list_of_memberno, get_members_by_list_of_id, get_member_by_id
+from ddb_data import put_augmented
+from ddb_data import get_all_members, get_members_by_list_of_memberno, get_members_by_list_of_id, get_member_by_id
 from geo import addproximity
-# import ddb_data
-
-all_members = None
 
 class ProfileInput(InputObjectType):
   text = String()
@@ -87,8 +84,7 @@ class Query(ObjectType):
       elif 'ids' in k:
         total, members = get_members_by_list_of_id(args['ids'])
       else:
-        members = get_all_members()
-        total = len(members)
+        total, members = get_all_members()
       k = [key for key in k if key not in extrakeys]
       for field in k:
         members = list(filter(lambda member: member[field] == args[field], members))

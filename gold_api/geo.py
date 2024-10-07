@@ -45,11 +45,11 @@ def distance(ll, lng, lat):
 def addlatlng(members):
   for member in members:
     if member['country'] in ['Eire', 'United Kingdom'] and len(member['postcode']) > 2 and not 'lat' in member:
-        loc = osfind(member['postcode'].replace(' ', ''))
-        if loc is not None:
-          member['lat'] = geoval(loc['lat'])
-          member['lng'] = geoval(loc['lng'])
-          add_location(member, loc)
+      loc = osfind(member['postcode'].replace(' ', ''))
+      if loc is not None:
+        member['lat'] = geoval(loc['lat'])
+        member['lng'] = geoval(loc['lng'])
+        add_location(member, loc)
 
 def addproximity(members, lng, lat):
   addlatlng(members)
