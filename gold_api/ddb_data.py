@@ -2,9 +2,6 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal 
 
-# fields to exclude from results by default
-exclude = ['lat', 'lng', 'address1', 'address2', 'address3']
-
 keymap = {
   'address': ['address1', 'address2', 'address3'], 
   'member': 'membership',
@@ -40,8 +37,8 @@ def a(row):
   row['address'] = [row['address1'], row['address2'], row['address3']]
   return row
 
-def mapData(data, exclude):
-  return [{mapKey(k):mapValue(k, v) for (k,v) in a(row).items() if not k in exclude} for row in data]
+def mapData(data):
+  return [{mapKey(k):mapValue(k, v) for (k,v) in a(row).items()} for row in data]
 
 def put_augmented(row):
     global table
@@ -64,26 +61,26 @@ def put_augmented(row):
     )
 
 def get_all_members():
-  global table, exclude
+  global table
   r = table.scan()
-  return r['Count'], mapData(r['Items'], exclude)
+  return r['Count'], mapData(r['Items'])
 
 def get_members_by_list_of_memberno(l):
-  global table, exclude
+  global table
   if len(l) == 1:
     r = table.query(KeyConditionExpression=Key("membership").eq(l[0]))
   else:
     r = table.scan(FilterExpression=Attr('membership').is_in(l))
-  return table.item_count, mapData(r['Items'], exclude)
+  return table.item_count, mapData(r['Items'])
 
 def get_member_by_id(id):
-  global table, exclude
+  global table
   r = table.scan(FilterExpression=Attr('id').eq(id))
   if r['Count'] == 1:
-    return mapData(r['Items'], exclude)[0]
+    return mapData(r['Items'])[0]
   return None
 
 def get_members_by_list_of_id(l):
-  global table, exclude
+  global table
   r = table.scan(FilterExpression=Attr('id').is_in(l))
-  return table.item_count, mapData(r['Items'], exclude)
+  return table.item_count, mapData(r['Items'])
