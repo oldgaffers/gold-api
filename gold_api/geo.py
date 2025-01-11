@@ -45,7 +45,8 @@ def distance(ll, lng, lat):
 
 def addlatlng(members):
   for member in members:
-    if member['country'] in ['Eire', 'United Kingdom'] and len(member['postcode']) > 2 and not 'lat' in member:
+    lat = member.get('lat', None)
+    if member['country'] in ['Eire', 'United Kingdom'] and len(member['postcode']) > 2 and lat is None:
       loc = osfind(member['postcode'].replace(' ', ''))
       if loc is not None:
         member['lat'] = geoval(loc['lat'])
