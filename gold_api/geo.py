@@ -14,6 +14,7 @@ def init():
     key = r['Parameter']['Value']
 
 def osfind(place):
+  global key
   try: 
     r = requests.get('https://api.os.uk/search/names/v1/find', headers={'key': key}, params={'query': place, 'maxresults': 1})
     if r.ok:
