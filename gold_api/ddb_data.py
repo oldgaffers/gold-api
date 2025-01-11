@@ -25,10 +25,16 @@ def init():
   table = dynamodb.Table('members')
 
 def mapValue(k, v):
-  if k == 'lat' or k == 'lng':
-    return float(v)
-  if isinstance(v, Decimal):
-    return int(v)
+  try:
+    if k == 'lat' or k == 'lng':
+      if v == Decimal(0):
+        return None
+      fv = float(v)
+      return fv
+    if isinstance(v, Decimal):
+      return int(v)
+  except:
+    print('error in mapValue', k, v)
   return v
 
 def mapKey(k):
@@ -41,7 +47,10 @@ def mapKey(k):
   return k
 
 def a(row):
-  row['address'] = [row['address1'], row['address2'], row['address3']]
+  try:
+    row['address'] = [row['address1'], row['address2'], row['address3']]
+  except:
+    print('error in address', row)
   return row
 
 def mapData(data):
@@ -91,6 +100,7 @@ def get_total():
 def get_all_members():
   global table
   r = table.scan()
+  print('G', r['Count'])
   return r['Count'], mapData(r['Items'])
 
 def get_members_by_list_of_memberno(l):
