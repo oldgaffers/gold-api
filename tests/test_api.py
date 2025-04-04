@@ -2,7 +2,7 @@ import os
 import sys
 from mock import patch
 sys.path.append(os.getcwd()+'/gold_api')
-from gold_api.api import get_members_by_list_of_id, get_schema
+from gold_api.api import get_schema
 
 test_member = {
         'id': 559,
@@ -12,7 +12,7 @@ test_member = {
         'member': 0,
         'GDPR': False,
         'smallboats': False,
-        'younger_member': False,
+        'youngermember': False,
         'status': '',
         'telephone': '',
         'mobile': '',
@@ -64,7 +64,7 @@ def test_query_by_list_of_id(mock_get_members_by_list_of_id):
     )
     assert er.data == { 'members': [{ 'id': 559 }]}    
     er = schema.execute(
-        'query members($ids: [Int]!) { members(ids: $ids) { id skipper{ text } crewing{ text } salutation firstname lastname member id GDPR smallboats younger_member status telephone mobile area town interests email primary postcode type payment address country yob start __typename }}',
+        'query members($ids: [Int]!) { members(ids: $ids) { id skipper{ text } crewing{ text } salutation firstname lastname member id GDPR smallboats youngermember status telephone mobile area town interests email primary postcode type payment address country yob start __typename }}',
         variables={
             'ids': [559],
         },

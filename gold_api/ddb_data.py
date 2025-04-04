@@ -13,7 +13,8 @@ keymap = {
   'address': ['address1', 'address2', 'address3'], 
   'member': 'membership',
   'yob': 'year_of_birth', 
-  'start': 'year_joined', 
+  'start': 'year_joined',
+  'youngermember': 'younger_member',
 }
 
 dynamodb = None
@@ -44,6 +45,8 @@ def mapKey(k):
     return 'yob'
   elif k == 'year joined':
     return 'start'
+  elif k == 'younger_member':
+    return 'youngermember'
   return k
 
 def a(row):

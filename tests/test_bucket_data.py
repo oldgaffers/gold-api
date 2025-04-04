@@ -12,7 +12,7 @@ test_member = {
         'member': 0,
         'GDPR': False,
         'smallboats': False,
-        'younger_member': False,
+        'youngermember': False,
         'status': '',
         'telephone': '',
         'mobile': '',
