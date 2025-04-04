@@ -27,6 +27,7 @@ class Member(ObjectType):
   email = String()
   GDPR = Boolean()
   smallboats = Boolean()
+  younger_member = Boolean()
   town = String()
   area = String()
   telephone = String()

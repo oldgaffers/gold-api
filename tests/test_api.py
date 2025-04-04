@@ -12,6 +12,7 @@ test_member = {
         'member': 0,
         'GDPR': False,
         'smallboats': False,
+        'younger_member': False,
         'status': '',
         'telephone': '',
         'mobile': '',
@@ -63,7 +64,7 @@ def test_query_by_list_of_id(mock_get_members_by_list_of_id):
     )
     assert er.data == { 'members': [{ 'id': 559 }]}    
     er = schema.execute(
-        'query members($ids: [Int]!) { members(ids: $ids) { id skipper{ text } crewing{ text } salutation firstname lastname member id GDPR smallboats status telephone mobile area town interests email primary postcode type payment address country yob start __typename }}',
+        'query members($ids: [Int]!) { members(ids: $ids) { id skipper{ text } crewing{ text } salutation firstname lastname member id GDPR smallboats younger_member status telephone mobile area town interests email primary postcode type payment address country yob start __typename }}',
         variables={
             'ids': [559],
         },
