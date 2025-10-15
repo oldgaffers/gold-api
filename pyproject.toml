@@ -6,8 +6,8 @@ authors = ["jcable <julian.cable@yahoo.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11, <3.12"
-graphene = "^3.3"
+python = "^3.13"
+graphene = "^3.4.3"
 bng-latlon = "^1.1"
 
 
