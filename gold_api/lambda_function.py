@@ -14,8 +14,11 @@ if os.environ.get('CI', 'false') != 'true':
 def get_user(event):
   auth = event['headers']['authorization']
   authorizer = event['requestContext']['authorizer']
-  aud = authorizer['claims']['aud']
-  aud = aud.replace('[','').replace(']','').split(' ')
+  if 'jwt' in authorizer:
+    claims = authorizer['jwt']['claims']
+  else:
+    claims = authorizer['claims']
+  aud = claims['aud'].replace('[','').replace(']','').split(' ')
   ui = next((url for url in aud if 'userinfo' in url), None)
   req = urllib.request.Request(ui, headers={'authorization': auth})
   with urllib.request.urlopen(req) as response:

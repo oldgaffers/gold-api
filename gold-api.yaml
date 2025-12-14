@@ -1,62 +1,75 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: An AWS Serverless Specification template describing your function.
+Description: GraphQL API for accessing OGA Member Data.
 Resources:
   goldapi:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: .
-      Description: ''
-      MemorySize: 128
-      Timeout: 60
+      Description: GraphQL API for accessing OGA Member Data.  
+      FunctionName: gold-api-v2    
+      InlineCode: >-
+        def lambda_handler(event, context):
+          print('Checking {} at {}...'.format(SITE, event['time']))
+      MemorySize: 10240
+      Timeout: 600
       Handler: lambda_function.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.13
       Architectures:
-        - x86_64
+        - arm64
+      EphemeralStorage:
+        Size: 512
       EventInvokeConfig:
         MaximumEventAgeInSeconds: 21600
         MaximumRetryAttempts: 2
-      EphemeralStorage:
-        Size: 512
-      Events:
-        Api1:
-          Type: Api
-          Properties:
-            Path: /gold-api
-            Method: ANY
-        Api2:
-          Type: Api
-          Properties:
-            Path: /MyResource
-            Method: ANY
-        Api3:
-          Type: Api
-          Properties:
-            Path: /graphql
-            Method: ANY
-      Layers:
-        - >-
-          arn:aws:lambda:eu-west-1:770693421928:layer:Klayers-python38-graphene:2
-      RuntimeManagementConfig:
-        UpdateRuntimeOn: Auto
-      SnapStart:
-        ApplyOn: None
       PackageType: Zip
       Policies:
-        Statement:
-          - Sid: VisualEditor0
-            Effect: Allow
-            Action:
-              - s3:GetObject
-            Resource: arn:aws:s3:::boatregister/gold/*
-          - Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-            Resource: arn:aws:logs:eu-west-1:651845762820:*
-          - Effect: Allow
-            Action:
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource:
-              - >-
-                arn:aws:logs:eu-west-1:651845762820:log-group:/aws/lambda/gold-api:*
+        - S3CrudPolicy:
+            BucketName: boatregister
+        - DynamoDBCrudPolicy:
+            TableName: members
+        - SSMParameterReadPolicy:
+            ParameterName: OS/API_KEY       
+        - SSMParameterReadPolicy:
+            ParameterName: GOOGLE/GEO_API_KEY
+      RecursiveLoop: Terminate
+      SnapStart:
+        ApplyOn: None
+      Events:
+        graphqlApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /graphql
+            Method: POST
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+  HttpApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+        StageName: default
+        CorsConfiguration:
+          AllowOrigins:
+            - "https://oga.org.uk"
+            - "https://www.oga.org.uk"
+            - "http://localhost:3000"
+            - "http://localhost:5173"
+          AllowHeaders:
+            - Authorization
+            - Content-Type
+          AllowMethods:
+            - POST
+            - OPTIONS
+          MaxAge: 600
+          AllowCredentials: false
+        Auth:
+          Authorizers:
+            OAuth2Authorizer:
+  #            AuthorizationScopes:
+  #              - scope1
+  #              - scope2
+              JwtConfiguration:
+                issuer: "https://dev-uf87e942.eu.auth0.com/"
+                audience:
+                  - https://oga.org.uk/membership
+              IdentitySource: "$request.header.Authorization"
+          DefaultAuthorizer: OAuth2Authorizer
