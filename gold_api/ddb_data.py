@@ -100,32 +100,47 @@ def put_augmented(row):
 def get_total():
   return table.item_count
 
+def queryOrScan(attr=None, values=[]):
+    global table
+    if len(values) == 1:
+        data = table.query(KeyConditionExpression=Key(attr).eq(values[0]))
+        total = data['ScannedCount']
+        items = data['Items']
+    else:
+        kw = {}
+        if attr is not None:
+           kw['FilterExpression'] = Attr(attr).is_in(values)
+        data = table.scan(**kw)
+        more = True
+        items = data['Items']
+        total = data['ScannedCount']
+        while more:
+            if 'LastEvaluatedKey' in data:
+                kw['ExclusiveStartKey'] = data['LastEvaluatedKey']
+                data = table.scan(**kw)
+                items.extend(data['Items'])
+                total += data['ScannedCount']
+            else:
+                more = False
+    return items, total
+
 def get_all_members():
-  global table
-  r = table.scan()
-  print('G', r['Count'])
-  return r['Count'], mapData(r['Items'])
+  items, total = queryOrScan()
+  return total, mapData(items)
 
 def get_members_by_list_of_memberno(l):
-  global table
-  if len(l) == 1:
-    r = table.query(KeyConditionExpression=Key("membership").eq(l[0]))
-    return table.item_count, mapData(r['Items'])
-  else:
-    r = table.scan(FilterExpression=Attr('membership').is_in(l))
-    return r['Count'], mapData(r['Items'])
+  items, total = queryOrScan('membership', l)
+  return total, mapData(items)
 
 def get_member_by_id(id):
-  global table
-  r = table.scan(FilterExpression=Attr('id').eq(id))
-  if r['Count'] == 1:
-    return mapData(r['Items'])[0]
+  items, total = queryOrScan('id', id)
+  if total > 0:
+    return total, mapData(items)
   return None
 
 def get_members_by_list_of_id(l):
-  global table
-  r = table.scan(FilterExpression=Attr('id').is_in(l))
-  return r['Count'], mapData(r['Items'])
+  items, total = queryOrScan('id', l)
+  return total, mapData(items)
 
 def geoval(f):
   return round(Decimal(f), 5)
