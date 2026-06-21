@@ -42,3 +42,4 @@ jobs:
       - name: deploy
         run: |
           aws lambda update-function-code --function-name gold-api --zip-file fileb://lambda.zip
+          aws lambda update-function-code --function-name gold-api-v2 --zip-file fileb://lambda.zip
