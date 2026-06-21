@@ -68,8 +68,9 @@ Resources:
   #              - scope1
   #              - scope2
               JwtConfiguration:
-                issuer: "https://dev-uf87e942.eu.auth0.com/"
+                issuer: https://dev-uf87e942.eu.auth0.com/
                 audience:
                   - https://oga.org.uk/membership
+                  - https://oga.org.uk/boatregister
               IdentitySource: "$request.header.Authorization"
           DefaultAuthorizer: OAuth2Authorizer
