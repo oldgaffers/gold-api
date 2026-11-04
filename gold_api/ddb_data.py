@@ -133,14 +133,14 @@ def get_members_by_list_of_memberno(l):
   return total, mapData(items)
 
 def get_members_by_list_of_id(l):
-  items, total = get_all_members()
+  items, total = queryOrScan()
   items = [item for item in items if item['id'] in l]
   return len(items), mapData(items)
 
 def get_member_by_id(id):
   items, total = get_members_by_list_of_id([id])
   if total > 0:
-    return total, mapData(items)
+    return total, items
   return None
 
 def geoval(f):
