@@ -132,15 +132,16 @@ def get_members_by_list_of_memberno(l):
   items, total = queryOrScan('membership', l)
   return total, mapData(items)
 
+def get_members_by_list_of_id(l):
+  items, total = get_all_members()
+  items = [item for item in items if item['id'] in l]
+  return len(items), mapData(items)
+
 def get_member_by_id(id):
-  items, total = queryOrScan('id', id)
+  items, total = get_members_by_list_of_id([id])
   if total > 0:
     return total, mapData(items)
   return None
-
-def get_members_by_list_of_id(l):
-  items, total = queryOrScan('id', l)
-  return total, mapData(items)
 
 def geoval(f):
   return round(Decimal(f), 5)
